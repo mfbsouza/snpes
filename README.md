@@ -1,8 +1,8 @@
 # SNPES Protocol
 
 SNPES stands for Simple Network Protocol for Embedded Systems. Snpes was originally
-designed to act as a Star Network Protocol for embedded LoRa devices, but i can be
-easily modified to work with other kinds of comunication devices. SNPES was born in
+designed to act as a Star Network Protocol for embedded LoRa devices, but it can be
+easily modified to work with other kinds of communication devices. SNPES was born in
 the author's graduation thesis for Computer Engineering at Universidade Federal de
 Pernambuco in Brazil.
 
