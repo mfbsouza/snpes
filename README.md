@@ -12,4 +12,4 @@ SNPES is licensed under GNU General Public License Version 2
 
 ## Contruiting
 
-Check Out [here!](CONTRIBUITING.md) 
+Check out [here!](CONTRIBUTING.md) 
