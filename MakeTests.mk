@@ -59,6 +59,7 @@ CPPUTEST_USE_GCOV = Y
 # containing directory
 INCLUDE_DIRS += $(CPPUTEST_HOME)/include
 INCLUDE_DIRS += $(CPPUTEST_HOME)/include/Platforms/Gcc
+INCLUDE_DIRS += src
 
 
 # --- CPPUTEST_OBJS_DIR ---

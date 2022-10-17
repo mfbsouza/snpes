@@ -111,6 +111,14 @@ endif
 tests:
 	make -f MakeTests.mk all
 
+# target for code coverage
+coverage: tests
+	@lcov --capture --directory $(OBJDIR)/src --output-file $(OBJDIR)/coverage.info
+	@genhtml $(OBJDIR)/coverage.info --output-directory $(OBJDIR)/coverage
+	@echo
+	@echo -n "Written coverage report to $(OBJDIR)/coverage/index.html"
+	@echo
+
 # target for cleaning files
 clean:
 	rm -f $(PROJECT)_tests

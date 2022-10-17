@@ -13,3 +13,8 @@ SNPES is licensed under GNU General Public License Version 2
 ## Contruiting
 
 Check out [here!](CONTRIBUTING.md) 
+
+## Dependencies
+
+- [CppUTest](https://github.com/cpputest/cpputest) as an Unit Testing and Mocking Framework
+- [LCOV](https://github.com/linux-test-project/lcov) an a Code Coverage reporting tool
