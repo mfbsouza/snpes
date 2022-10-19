@@ -94,3 +94,21 @@ TEST(CircularQueueTests, WrapAround)
 	CHECK_EQUAL(15, *(int *)retval);
 	CHECK_EQUAL(2, test_queue.tail);
 }
+
+TEST(CircularQueueTests, CheckFullState)
+{
+	int c = 18;
+	uint8_t retval = 10;
+	queue_init(&test_queue);
+	retval = queue_full(&test_queue);
+	CHECK_EQUAL(0, retval);
+	retval = 10;
+	queue_push(&test_queue, &c);
+	retval = queue_full(&test_queue);
+	CHECK_EQUAL(0, retval);
+	queue_push(&test_queue, &c);
+	queue_push(&test_queue, &c);
+	queue_push(&test_queue, &c);
+	retval = queue_full(&test_queue);
+	CHECK_EQUAL(1, retval);
+}
