@@ -46,4 +46,11 @@ int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr);
  */
 void* queue_pop(Queue_t *queue_ctx);
 
+/** 
+ * @brief Checks if a Queue is empty
+ *
+ * @retval 0 for False, 1 for True
+ */
+uint8_t queue_empty(Queue_t *queue_ctx);
+
 #endif /* __CIRCULAR_QUEUE_H__ */

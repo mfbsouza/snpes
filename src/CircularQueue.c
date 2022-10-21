@@ -48,3 +48,12 @@ void* queue_pop(Queue_t *queue_ctx)
 	}
 	return ret;
 }
+
+uint8_t queue_empty(Queue_t *queue_ctx)
+{
+	uint8_t ret = 0;
+	if (queue_ctx->head == -1 && queue_ctx->tail == -1) {
+		ret = 1;
+	}
+	return ret;
+}

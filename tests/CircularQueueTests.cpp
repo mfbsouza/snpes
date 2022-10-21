@@ -94,3 +94,15 @@ TEST(CircularQueueTests, WrapAround)
 	CHECK_EQUAL(15, *(int *)retval);
 	CHECK_EQUAL(2, test_queue.tail);
 }
+
+TEST(CircularQueueTests, QueueIsEmpty)
+{
+	int a = 14;
+	int ret = 0;
+	queue_init(&test_queue);
+	ret = queue_empty(&test_queue);
+	CHECK_EQUAL(1, ret);
+	queue_push(&test_queue, &a);
+	ret = queue_empty(&test_queue);
+	CHECK_EQUAL(0, ret);
+}
