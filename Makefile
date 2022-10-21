@@ -114,9 +114,9 @@ tests:
 # target for code coverage
 coverage: tests
 	@lcov --capture --directory $(OBJDIR)/src --output-file $(OBJDIR)/coverage.info
-	@genhtml $(OBJDIR)/coverage.info --output-directory $(OBJDIR)/coverage
+	@genhtml $(OBJDIR)/coverage.info --output-directory $(BUILDDIR)/coverage
 	@echo
-	@echo -n "Written coverage report to $(OBJDIR)/coverage/index.html"
+	@echo -n "Written coverage report to $(BUILDDIR)/coverage/index.html"
 	@echo
 
 # target for cleaning files

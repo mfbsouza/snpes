@@ -28,6 +28,15 @@ typedef struct {
 void queue_init(Queue_t *queue_ctx);
 
 /** 
+ * @brief request allocation for one element in the Queue
+ *
+ * @param *queue_ctx: The Queue Context Struct
+ *
+ * @retval the start address allocated for the element
+ */
+void* queue_alloc(Queue_t *queue_ctx);
+
+/** 
  * @brief Copies a given element into the Queue
  *
  * @param *queue_ctx: The Queue Context Struct
@@ -36,7 +45,6 @@ void queue_init(Queue_t *queue_ctx);
  * @retval error code
  */
 int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr);
-
 
 /** 
  * @brief Gets the address of the next element to read from the Queue
@@ -52,5 +60,14 @@ void* queue_pop(Queue_t *queue_ctx);
  * @retval 0 for False, 1 for True
  */
 uint8_t queue_empty(Queue_t *queue_ctx);
+
+/** 
+ * @brief checks if a given Queue is full
+ *
+ * @param *queue_ctx: The Queue Context Struct
+ *
+ * @retval 0 for False, 1 for True
+ */
+uint8_t queue_full(Queue_t *queue_ctx);
 
 #endif /* __CIRCULAR_QUEUE_H__ */

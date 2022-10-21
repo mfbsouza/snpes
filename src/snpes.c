@@ -33,9 +33,9 @@ typedef struct {
 
 /* private variables */
 
-static  DeviceCtx_t  dev;
-static  uint8_t      buf[BUF_SIZE] = {0};
-static  ClientCtx_t  clients[CLT_CNT] = {0};
+static  DeviceCtx_t dev;
+static  uint8_t     buf[BUF_SIZE] = {0};
+static  ClientCtx_t clients[CLT_CNT] = {0};
 
 /* protocol data streams */
 static Queue_t stream_in = {
