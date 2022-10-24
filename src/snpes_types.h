@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "snpes_cfg.h"
+#include "CircularQueue.h"
 #include "ConnInterface.h"
 #include "TimerInterface.h"
 
@@ -22,6 +23,8 @@ typedef struct {
 	uint8_t network_id;
 	uint8_t type;
 	HwCtx_t hw;
+	Queue_t stream_in;
+	Queue_t stream_out;
 } DeviceCtx_t;
 
 typedef struct {
@@ -33,5 +36,14 @@ typedef struct {
 	uint8_t data_size;
 	uint8_t data[PKT_SIZE-META_SIZE];
 } Packet_t;
+
+typedef enum {
+	SCAN = 0x00,
+	INFO,
+	SET,
+	SYNC,
+	ACK,
+	FULL,
+} PacketType_t;
 
 #endif /* __SNPES_TYPES_H__ */
