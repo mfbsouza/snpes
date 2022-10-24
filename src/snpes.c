@@ -1,38 +1,10 @@
 #include "snpes.h"
+#include "snpes_types.h"
 #include "CircularQueue.h"
 #include <string.h>
 #include <assert.h>
 
-typedef struct {
-	uint8_t unique_id;
-	uint8_t state;
-	uint8_t connected;
-} ClientCtx_t;
-
-typedef struct {
-	LoraItf_t *socket;
-	TimerItf_t *timer;
-} HwCtx_t;
-
-typedef struct {
-	uint8_t unique_id;
-	uint8_t network_id;
-	uint8_t type;
-	HwCtx_t hw;
-} DeviceCtx_t;
-
-typedef struct {
-	uint8_t src_uid;
-	uint8_t src_nid;
-	uint8_t dest_uid;
-	uint8_t dest_nid;
-	uint8_t flgs_seq;
-	uint8_t data_size;
-	uint8_t data[PKT_SIZE-META_SIZE];
-} Packet_t;
-
 /* private variables */
-
 static  DeviceCtx_t dev;
 static  uint8_t     buf[BUF_SIZE] = {0};
 static  ClientCtx_t clients[CLT_CNT] = {0};
@@ -75,13 +47,15 @@ void snpes_init(DeviceType_t type, uint8_t uid, LoraItf_t *lora, TimerItf_t *tim
 
 static void stream_handler()
 {
-	uint8_t nid, size, temp[PKT_SIZE];
+	uint8_t nid, size;
 	void *src = NULL;
+	void *dest = NULL;
 
 	/* if there is some packet availiable, save it */
-	if (dev.hw.socket->pkt_avail()) {
-		dev.hw.socket->pkt_recv(&nid, temp, &size);
-		queue_push(&stream_in, temp);
+	if (dev.hw.socket->pkt_avail() && !queue_full(&stream_in)) {
+		dest = queue_alloc(&stream_in);
+		dev.hw.socket->pkt_recv(&nid, dest, &size);
+		queue_push(&stream_in, dest);
 	}
 
 	/* if there is some packet to send, send it */
