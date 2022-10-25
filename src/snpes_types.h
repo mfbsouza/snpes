@@ -44,6 +44,7 @@ typedef enum {
 	SYNC,
 	ACK,
 	FULL,
+	DATA
 } PacketType_t;
 
 #endif /* __SNPES_TYPES_H__ */

@@ -1,14 +1,17 @@
 #include "CircularQueue.h"
 #include <string.h>
+#include <assert.h>
 
 void queue_init(Queue_t *queue_ctx)
 {
+	assert(queue_ctx);
 	queue_ctx->head = -1;
 	queue_ctx->tail = -1;
 }
 
 void* queue_alloc(Queue_t *queue_ctx)
 {
+	assert(queue_ctx);
 	void *dest_addr = NULL;
 
 	/* if queue is empty */
@@ -29,6 +32,8 @@ void* queue_alloc(Queue_t *queue_ctx)
 
 int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr)
 {
+	assert(queue_ctx);
+	assert(elmt_addr);
 	int8_t ret = -1;
 	void *dest_addr = NULL;
 
@@ -43,6 +48,7 @@ int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr)
 
 void* queue_pop(Queue_t *queue_ctx)
 {
+	assert(queue_ctx);
 	void *ret = NULL;
 
 	/* if queue is empty */
@@ -63,6 +69,7 @@ void* queue_pop(Queue_t *queue_ctx)
 
 uint8_t queue_empty(Queue_t *queue_ctx)
 {
+	assert(queue_ctx);
 	uint8_t ret = 0;
 	if (queue_ctx->head == -1 && queue_ctx->tail == -1) {
 		ret = 1;
@@ -72,6 +79,7 @@ uint8_t queue_empty(Queue_t *queue_ctx)
 
 uint8_t queue_full(Queue_t *queue_ctx)
 {
+	assert(queue_ctx);
 	uint8_t ret = 0;
 	if (((queue_ctx->head+1) % queue_ctx->elmt_cnt) == queue_ctx->tail) {
 		ret = 1;

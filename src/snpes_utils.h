@@ -4,8 +4,8 @@
 #include "snpes_types.h"
 #include <stdint.h>
 
-void send_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid);
-void send_data(DeviceCtx_t *dev, const void *data, uint8_t size);
-PacketType_t get_pkt_type(void *pkt);
+void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uint8_t dest_nid);
+void enqueue_data(DeviceCtx_t *dev, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq, const void *src, uint8_t size);
+PacketType_t get_pkt_type(Packet_t *pkt);
 
 #endif /* __SNPES_UTILS_H__ */
