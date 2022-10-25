@@ -63,10 +63,12 @@ static void stream_handler()
 	}
 }
 
-static void state_machine()
+static void gateway_state_machine()
 {
 	States_t state;
 	Packet_t *pkt = NULL;
+	ClientCtx_t *clt = NULL;
+	uint8_t nid;
 
 	/* if there isn't packets to process */
 	if (queue_empty(&dev.stream_in)) return;
@@ -79,17 +81,55 @@ static void state_machine()
 	/* if the packet isn't from a client */
 	if (pkt->src_nid == 0xFF) {
 		if (get_pkt_type(pkt) == SCAN) {
-			// set scan state
+			state = SEND_INFO;
 		}
-		else if (get_pkt_type(pkt) == INFO) {
-			// set info state
-		}
-		else if (get_pkt_type(pkt) == SYNC) {
-			// set sync state
+		else if (get_pkt_type(pkt) == SYNC && pkt->dest_uid == dev.unique_id) {
+			state = RESP_SYNC;
 		}
 		else {
-			// corrupted packet
+			/* corrupted packet, just ignore it */
 			return;
 		}
+	}
+	/* it's *probably* a client */
+	else {
+		clt = get_client_ctx(clients, pkt->src_nid);
+		if (clt->connected != NOT_CONNETED) {
+			state = clt->state;
+		}
+		else {
+			/* that's not a real client, ignore it */
+			return;
+		}
+	}
+
+	/* */
+	switch (state) {
+	case SEND_INFO:
+		enqueue_signal(&dev, INFO, pkt->src_uid, pkt->src_nid);
+		break;
+	case RESP_SYNC:
+		nid = alloc_nid(clients);
+		if (nid == 0x00) {
+			enqueue_signal(&dev, FULL, pkt->src_uid, pkt->src_nid);
+		}
+		else {
+			clt = get_client_ctx(clients, nid);
+			if (clt->connected != CONNECTING) {
+				clt->connected = CONNECTING;
+				clt->unique_id = pkt->src_uid;
+				clt->timeout = 0;
+				clt->state = WAIT_ACK;
+			}
+			else if (clt->timeout == MAX_TIMEOUT) {
+				free_nid(clients, nid);
+			}
+			else {
+				enqueue_data(&dev, pkt->src_uid, pkt->src_nid, 0x00, &nid, sizeof(nid));
+			}
+		}
+		break;
+	case WAIT_ACK:
+		break;
 	}
 }

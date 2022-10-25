@@ -8,13 +8,32 @@
 #include "TimerInterface.h"
 
 typedef enum {
-	IDLE = 0x00,
+	SEND_INFO = 0x00,
+	RESP_SYNC,
+	WAIT_ACK
 } States_t;
+
+typedef enum {
+	NOT_CONNETED = 0x00,
+	CONNECTED,
+	CONNECTING
+} ConnState_t;
+
+typedef enum {
+	SCAN = 0x00,
+	INFO,
+	SET,
+	SYNC,
+	ACK,
+	FULL,
+	DATA
+} PacketType_t;
 
 typedef struct {
 	uint8_t unique_id;
 	States_t state;
-	uint8_t connected;
+	ConnState_t connected;
+	uint8_t timeout;
 } ClientCtx_t;
 
 typedef struct {
@@ -40,15 +59,5 @@ typedef struct {
 	uint8_t data_size;
 	uint8_t data[PKT_SIZE-META_SIZE];
 } Packet_t;
-
-typedef enum {
-	SCAN = 0x00,
-	INFO,
-	SET,
-	SYNC,
-	ACK,
-	FULL,
-	DATA
-} PacketType_t;
 
 #endif /* __SNPES_TYPES_H__ */

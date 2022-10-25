@@ -38,7 +38,7 @@ void enqueue_data(DeviceCtx_t *dev, uint8_t dest_uid, uint8_t dest_nid, uint8_t 
 	}
 }
 
-uint8_t get_free_nid(ClientCtx_t *arr)
+uint8_t alloc_nid(ClientCtx_t *arr)
 {
 	assert(arr);
 	int nid;
@@ -48,9 +48,20 @@ uint8_t get_free_nid(ClientCtx_t *arr)
 	return 0;
 }
 
+void free_nid(ClientCtx_t *arr, uint8_t nid)
+{
+	assert(arr);
+	assert(nid > 0);
+	arr[(nid-1)].connected = 0;
+	arr[(nid-1)].unique_id = 0;
+	arr[(nid-1)].timeout = 0;
+	arr[(nid-1)].state = 0;
+}
+
 ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid)
 {
 	assert(arr);
+	assert(nid > 0);
 	return &(arr[nid-1]);
 }
 
