@@ -55,6 +55,14 @@ int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr);
 void* queue_pop(Queue_t *queue_ctx);
 
 /** 
+ * @brief Gets the address of the next element to read from the Queue
+ * but does not marks the element as red in the Queue
+ *
+ * @retval The element Address or NULL if no element to read
+ */
+void* queue_peek(Queue_t *queue_ctx);
+
+/** 
  * @brief Checks if a Queue is empty
  *
  * @retval 0 for False, 1 for True

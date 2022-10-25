@@ -124,3 +124,15 @@ TEST(CircularQueueTests, CheckFullState)
 	retval = queue_full(&test_queue);
 	CHECK_EQUAL(1, retval);
 }
+
+TEST(CircularQueueTests, QueuePeek)
+{
+	int a = 13;
+	void *addr = NULL;
+	queue_init(&test_queue);
+	addr = queue_peek(&test_queue);
+	POINTERS_EQUAL(NULL, addr);
+	queue_push(&test_queue, &a);
+	addr = queue_peek(&test_queue);
+	CHECK_EQUAL(13, *(int *)addr);
+}

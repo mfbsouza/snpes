@@ -7,9 +7,13 @@
 #include "ConnInterface.h"
 #include "TimerInterface.h"
 
+typedef enum {
+	IDLE = 0x00,
+} States_t;
+
 typedef struct {
 	uint8_t unique_id;
-	uint8_t state;
+	States_t state;
 	uint8_t connected;
 } ClientCtx_t;
 

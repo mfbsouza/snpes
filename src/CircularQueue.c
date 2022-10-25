@@ -52,7 +52,7 @@ void* queue_pop(Queue_t *queue_ctx)
 	void *ret = NULL;
 
 	/* if queue is empty */
-	if (queue_ctx->head == -1 && queue_ctx->tail == -1) {
+	if (queue_empty(queue_ctx)) {
 		ret = NULL;
 	}
 	/* if is the last element */
@@ -63,6 +63,21 @@ void* queue_pop(Queue_t *queue_ctx)
 	else {
 		ret = (void *)((uint8_t *)queue_ctx->start_addr + queue_ctx->tail*queue_ctx->elmt_size);
 		queue_ctx->tail = (queue_ctx->tail+1) % queue_ctx->elmt_cnt;
+	}
+	return ret;
+}
+
+void* queue_peek(Queue_t *queue_ctx)
+{
+	assert(queue_ctx);
+	void *ret = NULL;
+
+	/* if queue is empty */
+	if (queue_empty(queue_ctx)) {
+		ret = NULL;
+	}
+	else {
+		ret = (void *)((uint8_t *)queue_ctx->start_addr + queue_ctx->tail*queue_ctx->elmt_size);
 	}
 	return ret;
 }

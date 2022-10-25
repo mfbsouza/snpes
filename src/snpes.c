@@ -6,6 +6,7 @@
 #include <assert.h>
 
 /* private variables */
+
 static  DeviceCtx_t dev;
 static  uint8_t     buf[BUF_SIZE] = {0};
 static  ClientCtx_t clients[CLT_CNT] = {0};
@@ -59,5 +60,36 @@ static void stream_handler()
 	if (!queue_empty(&dev.stream_out)) {
 		src = (Packet_t *) queue_pop(&dev.stream_out);
 		dev.hw.socket->pkt_send(src->dest_nid, (uint8_t *)src, (src->data_size + META_SIZE));
+	}
+}
+
+static void state_machine()
+{
+	States_t state;
+	Packet_t *pkt = NULL;
+
+	/* if there isn't packets to process */
+	if (queue_empty(&dev.stream_in)) return;
+
+	/* else, get the packet */
+	pkt = (Packet_t *) queue_pop(&dev.stream_in);
+
+	/* figure out the protocol state */
+
+	/* if the packet isn't from a client */
+	if (pkt->src_nid == 0xFF) {
+		if (get_pkt_type(pkt) == SCAN) {
+			// set scan state
+		}
+		else if (get_pkt_type(pkt) == INFO) {
+			// set info state
+		}
+		else if (get_pkt_type(pkt) == SYNC) {
+			// set sync state
+		}
+		else {
+			// corrupted packet
+			return;
+		}
 	}
 }

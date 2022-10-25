@@ -1,6 +1,7 @@
-#include "snpes_utils.h"
-#include "CircularQueue.h"
 #include "snpes_types.h"
+#include "snpes_utils.h"
+#include "snpes_cfg.h"
+#include "CircularQueue.h"
 #include <string.h>
 #include <assert.h>
 
@@ -35,6 +36,22 @@ void enqueue_data(DeviceCtx_t *dev, uint8_t dest_uid, uint8_t dest_nid, uint8_t 
 		dest->data_size = size + META_SIZE;
 		memcpy(dest->data, src, size);
 	}
+}
+
+uint8_t get_free_nid(ClientCtx_t *arr)
+{
+	assert(arr);
+	int nid;
+	for (nid = 0; nid < CLT_CNT; nid++) {
+		if (arr[nid].connected != 1) return (uint8_t)(nid+1);
+	}
+	return 0;
+}
+
+ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid)
+{
+	assert(arr);
+	return &(arr[nid-1]);
 }
 
 PacketType_t get_pkt_type(Packet_t *pkt)
