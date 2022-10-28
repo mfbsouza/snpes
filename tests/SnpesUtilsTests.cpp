@@ -47,3 +47,61 @@ TEST(SnpesUtilsTests, EnqueueData)
 	CHECK_EQUAL(META_SIZE+sizeof(int), ((Packet_t *)stream_buf)->data_size);
 	CHECK_EQUAL(13, *(int *)(((Packet_t *)stream_buf)->data));
 }
+
+TEST(SnpesUtilsTests, AllocNID)
+{
+	uint8_t retval = 0;
+	retval = alloc_nid(test_clients);
+	CHECK_EQUAL(CONNECTING, test_clients[0].connected);
+	CHECK_EQUAL(1, test_clients[0].network_id);
+	CHECK_EQUAL(1, retval);
+	retval = alloc_nid(test_clients);
+	CHECK_EQUAL(CONNECTING, test_clients[1].connected);
+	CHECK_EQUAL(2, test_clients[1].network_id);
+	CHECK_EQUAL(2, retval);
+}
+
+TEST(SnpesUtilsTests, AllocNIDFull)
+{
+	uint8_t retval = 0;
+	int i;
+	for (i = 0; i < CLT_CNT; i++) {
+		retval = alloc_nid(test_clients);
+	}
+	CHECK_EQUAL(CLT_CNT, retval);
+	retval = alloc_nid(test_clients);
+	CHECK_EQUAL(0, retval);
+}
+
+TEST(SnpesUtilsTests, FreeNID)
+{
+	uint8_t retval = 0;
+	retval = alloc_nid(test_clients);
+	alloc_nid(test_clients);
+	free_nid(test_clients, retval);
+	CHECK_EQUAL(NOT_CONNETED, test_clients[0].connected);
+	CHECK_EQUAL(0, test_clients[0].network_id);
+	CHECK_EQUAL(0, test_clients[0].unique_id);
+	CHECK_EQUAL(0, test_clients[0].timer_ref);
+	CHECK_EQUAL(0, test_clients[0].timeout);
+	CHECK_EQUAL(0, test_clients[0].state);
+}
+
+TEST(SnpesUtilsTests, GetClientContext)
+{
+	uint8_t retval = 0;
+	ClientCtx_t *ptr = NULL;
+	retval = alloc_nid(test_clients);
+	ptr = get_client_ctx(test_clients, retval);
+	POINTERS_EQUAL(&(test_clients[0]), ptr);
+	retval = alloc_nid(test_clients);
+	ptr = get_client_ctx(test_clients, retval);
+	POINTERS_EQUAL(&(test_clients[1]), ptr);
+}
+
+TEST(SnpesUtilsTests, GetPacketType)
+{
+	queue_init(&test_dev.stream_out);
+	enqueue_signal(&test_dev, SYNC, 0x14, 0x16);
+	CHECK_EQUAL(SYNC, get_pkt_type((Packet_t *)stream_buf));
+}
