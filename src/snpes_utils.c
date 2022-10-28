@@ -43,7 +43,11 @@ uint8_t alloc_nid(ClientCtx_t *arr)
 	assert(arr);
 	int nid;
 	for (nid = 0; nid < CLT_CNT; nid++) {
-		if (arr[nid].connected != 1) return (uint8_t)(nid+1);
+		if (arr[nid].connected == NOT_CONNETED) {
+			arr[nid].connected = CONNECTING;
+			arr[nid].network_id = (uint8_t)(nid+1);
+			return (uint8_t)(nid+1);
+		}
 	}
 	return 0;
 }
@@ -54,6 +58,8 @@ void free_nid(ClientCtx_t *arr, uint8_t nid)
 	assert(nid > 0);
 	arr[(nid-1)].connected = 0;
 	arr[(nid-1)].unique_id = 0;
+	arr[(nid-1)].network_id = 0;
+	arr[(nid-1)].timer_ref = 0;
 	arr[(nid-1)].timeout = 0;
 	arr[(nid-1)].state = 0;
 }

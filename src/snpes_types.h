@@ -8,10 +8,16 @@
 #include "TimerInterface.h"
 
 typedef enum {
+	GATEWAY = 0x00,
+	NODE = 0xFF
+} DeviceType_t;
+
+typedef enum {
 	SEND_INFO = 0x00,
 	RESP_SYNC,
-	WAIT_ACK
-} States_t;
+	WAIT_ACK,
+	IDLE
+} GwStates_t;
 
 typedef enum {
 	NOT_CONNETED = 0x00,
@@ -31,8 +37,10 @@ typedef enum {
 
 typedef struct {
 	uint8_t unique_id;
-	States_t state;
+	uint8_t network_id;
+	GwStates_t state;
 	ConnState_t connected;
+	uint32_t timer_ref;
 	uint8_t timeout;
 } ClientCtx_t;
 
@@ -48,6 +56,7 @@ typedef struct {
 	HwCtx_t hw;
 	Queue_t stream_in;
 	Queue_t stream_out;
+	Queue_t waiting_clt;
 } DeviceCtx_t;
 
 typedef struct {

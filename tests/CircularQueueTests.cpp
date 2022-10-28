@@ -136,3 +136,23 @@ TEST(CircularQueueTests, QueuePeek)
 	addr = queue_peek(&test_queue);
 	CHECK_EQUAL(13, *(int *)addr);
 }
+
+TEST(CircularQueueTests, QueueOfPointers)
+{
+	int* pointer_buf[3];
+	Queue_t pointer_queue {
+		(void *)pointer_buf,
+		sizeof(int *),
+		3,
+		0,
+		0
+	};
+	int a = 13;
+	int *ptr = &a;
+	void *retval = NULL;
+	queue_init(&pointer_queue);
+	queue_push(&pointer_queue, &ptr);
+	retval = queue_pop(&pointer_queue);
+	POINTERS_EQUAL(ptr, *(int **)retval);
+	CHECK_EQUAL(13, *(*(int **)retval));
+}
