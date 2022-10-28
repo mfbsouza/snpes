@@ -156,6 +156,8 @@ static void gateway_state_machine()
 			}
 		}
 		break;
+	case IDLE:
+		break;
 	default:
 		break;
 	}
