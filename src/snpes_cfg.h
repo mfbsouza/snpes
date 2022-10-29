@@ -12,6 +12,7 @@
 #define CLT_CNT    8
 #endif /* SNPES_MICRO */
 
-#define MAX_TIMEOUT 2
+#define MAX_TIMEOUT_CNT 2
+#define TIMEOUT_THLD 2000
 
 #endif /* __SNPES_CFG_H__ */

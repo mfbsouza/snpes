@@ -42,6 +42,7 @@ typedef struct {
 	ConnState_t connected;
 	uint32_t timer_ref;
 	uint8_t timeout;
+	uint8_t waiting;
 } ClientCtx_t;
 
 typedef struct {
@@ -56,7 +57,6 @@ typedef struct {
 	HwCtx_t hw;
 	Queue_t stream_in;
 	Queue_t stream_out;
-	Queue_t waiting_clt;
 } DeviceCtx_t;
 
 typedef struct {

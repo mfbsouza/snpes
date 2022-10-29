@@ -15,4 +15,10 @@
  */
 void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
 
+/**
+ * @brief calls all the gateway modules
+ * should be used in a loop function, like a pooling
+ */
+void snpes_compute(void);
+
 #endif /* __SNPES_GATEWAY_H__ */

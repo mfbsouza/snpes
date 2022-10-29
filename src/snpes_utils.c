@@ -62,6 +62,7 @@ void free_nid(ClientCtx_t *arr, uint8_t nid)
 	arr[(nid-1)].timer_ref = 0;
 	arr[(nid-1)].timeout = 0;
 	arr[(nid-1)].state = 0;
+	arr[(nid-1)].waiting = 0;
 }
 
 ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid)
@@ -69,6 +70,17 @@ ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid)
 	assert(arr);
 	assert(nid > 0);
 	return &(arr[nid-1]);
+}
+
+ClientCtx_t *get_waiting_client(ClientCtx_t *arr)
+{
+	assert(arr);
+	for (int i = 0; i < CLT_CNT; i++) {
+		if (arr[i].waiting == 1) {
+			return &(arr[i]);
+		}
+	}
+	return NULL;
 }
 
 PacketType_t get_pkt_type(Packet_t *pkt)

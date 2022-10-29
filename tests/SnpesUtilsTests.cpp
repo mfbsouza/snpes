@@ -18,9 +18,19 @@ TEST_GROUP(SnpesUtilsTests)
 		{nullptr, nullptr},
 		{(void *)(stream_buf+(PKT_SIZE*S_IN_CNT)), (uint8_t)PKT_SIZE, (uint8_t)S_OUT_CNT, 0, 0},
 		{(void *)stream_buf, (uint8_t)PKT_SIZE, (uint8_t)S_IN_CNT, 0, 0},
-		{nullptr, 0, 0, 0 ,0}
 	};
 };
+
+TEST(SnpesUtilsTests, GetWaitingClient)
+{
+	ClientCtx_t *ret = NULL;
+	test_clients[2].waiting = 1;
+	ret = get_waiting_client(test_clients);
+	POINTERS_EQUAL(&(test_clients[2]), ret);
+	test_clients[2].waiting = 0;
+	ret = get_waiting_client(test_clients);
+	POINTERS_EQUAL(NULL, ret);
+}
 
 TEST(SnpesUtilsTests, EnqueueSignal)
 {

@@ -8,10 +8,9 @@
 
 /* private variables */
 
-static DeviceCtx_t  dev;
-static ClientCtx_t  clients[CLT_CNT] = {0};
-static ClientCtx_t* clt_queue[CLT_CNT] = {0}; // TODO: i don't like this name
-static uint8_t      buf[BUF_SIZE] = {0};
+static DeviceCtx_t dev;
+static uint8_t     buf[BUF_SIZE] = {0};
+static ClientCtx_t clients[CLT_CNT] = {0};
 
 /* private functions */
 
@@ -19,6 +18,15 @@ static void stream_handler(void);
 static void gateway_state_machine(void);
 
 /* functions implementations */
+
+void snpes_compute(void)
+{
+	/* check if the gateway dev struct was initialized */
+	if (dev.unique_id == GATEWAY) {
+		stream_handler();
+		gateway_state_machine();
+	}
+}
 
 void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 {
@@ -41,17 +49,9 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 	dev.stream_out.elmt_size = (uint8_t)PKT_SIZE;
 	dev.stream_out.elmt_cnt = (uint8_t)S_OUT_CNT;
 
-	/* waiting for clients queue config */
-	dev.waiting_clt.start_addr = (void *)clt_queue;
-	dev.waiting_clt.elmt_size = sizeof(ClientCtx_t *);
-	dev.waiting_clt.elmt_cnt = (uint8_t)CLT_CNT;
-
 	/* initialize data streams */
 	queue_init(&dev.stream_in);
 	queue_init(&dev.stream_out);
-
-	/* initialize waiting for clients queue */
-	queue_init(&dev.waiting_clt); // TODO: i also don't like this name
 }
 
 static void stream_handler()
@@ -113,9 +113,8 @@ static void gateway_state_machine()
 			}
 		}
 	}
-	/* if there isn't packets inputs, check the waiting client response queue */
-	else if (!queue_empty(&dev.waiting_clt)) {
-		clt = *((ClientCtx_t **)queue_pop(&dev.waiting_clt));
+	/* if there isn't packets inputs, check for clients in the waiting state */
+	else if ((clt = get_waiting_client(clients)) != NULL) {
 		state = clt->state;
 	}
 	/* if there is nothing to do, just leave */
@@ -142,7 +141,7 @@ static void gateway_state_machine()
 			clt->timeout = 0;
 			clt->state = WAIT_ACK;
 			clt->timer_ref = dev.hw.timer->millis();
-			queue_push(&dev.waiting_clt, &clt);
+			clt->waiting = 1;
 			enqueue_data(&dev, clt->unique_id, pkt->src_nid, 0x00, &new_nid, sizeof(uint8_t));
 		}
 		break;
@@ -150,9 +149,27 @@ static void gateway_state_machine()
 		/* check if we are here because maybe there is a ACK packet */
 		if (pkt != NULL) {
 			if (get_pkt_type(pkt) == ACK) {
+				/* update client info as connected */
 				clt->connected = CONNECTED;
 				clt->state = IDLE;
-				//REMINDER: continue here
+				clt->waiting = 0;
+				clt->timeout = 0;
+				clt->timer_ref = 0;
+			}
+		}
+		/* *maybe* we're here because we're still waiting an ACK from a client */
+		else if (clt != NULL) {
+			if ((dev.hw.timer->millis() - clt->timer_ref) >= TIMEOUT_THLD) {
+				/* if there is no response till now, and we reached a maximum amount of trys */
+				if (++clt->timeout == MAX_TIMEOUT_CNT) {
+					/* just deallocate the Network ID */
+					free_nid(clients, clt->network_id);
+				}
+				/* else, try again */
+				else {
+					clt->timer_ref = dev.hw.timer->millis();
+					enqueue_data(&dev, clt->unique_id, NODE, 0x00, &(clt->network_id), sizeof(uint8_t));
+				}
 			}
 		}
 		break;

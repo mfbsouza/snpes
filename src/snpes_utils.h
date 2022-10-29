@@ -50,6 +50,13 @@ void free_nid(ClientCtx_t *arr, uint8_t nid);
 ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid);
 
 /**
+ * @brief gets the pointer to the first client that we are waiting for a response
+ *
+ * @param *arr: the client list array
+ */
+ClientCtx_t *get_waiting_client(ClientCtx_t *arr);
+
+/**
  * @brief gets the Packet Flag Type of a given Packet Struct
  *
  * @param *pkt: pointer to a Packet Struct in the memory
