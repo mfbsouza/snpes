@@ -6,6 +6,13 @@
 #include "ConnInterface.h"
 #include "TimerInterface.h"
 
+/**
+ * @brief initializes the snpes protocol as a gateway device
+ *
+ * @param uid: Unique Identifier of the device
+ * @param *lora: pointer to a LoRa Conn Interface
+ * @param *timer: pointer to a Timer Interface
+ */
 void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
 
 #endif /* __SNPES_GATEWAY_H__ */

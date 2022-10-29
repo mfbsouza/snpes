@@ -18,9 +18,12 @@ TEST_GROUP(CircularQueueTests)
 
 TEST(CircularQueueTests, Init)
 {
+	uint8_t retval = 13;
 	queue_init(&test_queue);
 	CHECK_EQUAL(-1, test_queue.head);
 	CHECK_EQUAL(-1, test_queue.tail);
+	retval = queue_remaining(&test_queue);
+	CHECK_EQUAL(4, retval);
 }
 
 TEST(CircularQueueTests, QueueFirstPush)
@@ -40,12 +43,15 @@ TEST(CircularQueueTests, QueueTwoPushs)
 	queue_push(&test_queue, &b);
 	CHECK_EQUAL(12, *(int *)buffer);
 	CHECK_EQUAL(14, *(int *)(buffer+test_queue.elmt_size));
+	a = queue_remaining(&test_queue);
+	CHECK_EQUAL(2, a);
 }
 
 TEST(CircularQueueTests, QueueIsFull)
 {
 	int a = 12;
 	int8_t retval = 0;
+	uint8_t remaining = 13;
 	queue_init(&test_queue);
 	queue_push(&test_queue, &a);
 	queue_push(&test_queue, &a);
@@ -53,6 +59,8 @@ TEST(CircularQueueTests, QueueIsFull)
 	queue_push(&test_queue, &a);
 	retval = queue_push(&test_queue, &a);
 	CHECK_EQUAL(-1, retval);
+	remaining = queue_remaining(&test_queue);
+	CHECK_EQUAL(0, remaining);
 }
 
 TEST(CircularQueueTests, EmptyQueue)

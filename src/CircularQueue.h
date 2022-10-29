@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-/** 
+/**
  * @brief The Queue Context Struct contains information about the Queue
  *
  * @param *start_addr: The start address of a continuous amount of memory
@@ -19,7 +19,7 @@ typedef struct {
 	int32_t tail;
 } Queue_t;
 
-/** 
+/**
  * @brief Initializes the Queue to manage a continuous amount of memory
  * by a given Queue Context Struct
  *
@@ -27,7 +27,7 @@ typedef struct {
  */
 void queue_init(Queue_t *queue_ctx);
 
-/** 
+/**
  * @brief request allocation for one element in the Queue
  *
  * @param *queue_ctx: The Queue Context Struct
@@ -36,7 +36,7 @@ void queue_init(Queue_t *queue_ctx);
  */
 void* queue_alloc(Queue_t *queue_ctx);
 
-/** 
+/**
  * @brief Copies a given element into the Queue
  *
  * @param *queue_ctx: The Queue Context Struct
@@ -46,7 +46,7 @@ void* queue_alloc(Queue_t *queue_ctx);
  */
 int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr);
 
-/** 
+/**
  * @brief Gets the address of the next element to read from the Queue
  * and marks the element as red in the Queue
  *
@@ -54,7 +54,7 @@ int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr);
  */
 void* queue_pop(Queue_t *queue_ctx);
 
-/** 
+/**
  * @brief Gets the address of the next element to read from the Queue
  * but does not marks the element as red in the Queue
  *
@@ -62,14 +62,14 @@ void* queue_pop(Queue_t *queue_ctx);
  */
 void* queue_peek(Queue_t *queue_ctx);
 
-/** 
+/**
  * @brief Checks if a Queue is empty
  *
  * @retval 0 for False, 1 for True
  */
 uint8_t queue_empty(Queue_t *queue_ctx);
 
-/** 
+/**
  * @brief checks if a given Queue is full
  *
  * @param *queue_ctx: The Queue Context Struct
@@ -77,5 +77,14 @@ uint8_t queue_empty(Queue_t *queue_ctx);
  * @retval 0 for False, 1 for True
  */
 uint8_t queue_full(Queue_t *queue_ctx);
+
+/**
+ * @brief check the remaining free spaces in the Queue
+ *
+ * @param *queue_ctx: The Queue Context Struct
+ *
+ * @retval how many free spaces are left in the Queue
+ */
+uint8_t queue_remaining(Queue_t *queue_ctx);
 
 #endif /* __CIRCULAR_QUEUE_H__ */

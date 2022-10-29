@@ -4,7 +4,7 @@
 #include "snpes_types.h"
 #include <stdint.h>
 
-/** 
+/**
  * @brief enqueue a Signal Packet to the stream out of a given protocol device
  *
  * @param *dev: pointer to the protocol device
@@ -14,7 +14,7 @@
  */
 void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uint8_t dest_nid);
 
-/** 
+/**
  * @brief enqueue a Data Packet to the stream out of a given protocol device
  *
  * @param *dev: pointer to the protocol device
@@ -26,14 +26,14 @@ void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uin
  */
 void enqueue_data(DeviceCtx_t *dev, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq, const void *src, uint8_t size);
 
-/** 
+/**
  * @brief allocates a Network ID of a given client list array
  *
  * @param *arr: the client list array
  */
 uint8_t alloc_nid(ClientCtx_t *arr);
 
-/** 
+/**
  * @brief free a given Network ID of a given cliente list array
  *
  * @param *arr: the client list array
@@ -41,7 +41,7 @@ uint8_t alloc_nid(ClientCtx_t *arr);
  */
 void free_nid(ClientCtx_t *arr, uint8_t nid);
 
-/** 
+/**
  * @brief gets the pointer to a Client Context Struct of a given client list array and Netowrk ID
  *
  * @param *arr: the client list array
@@ -49,7 +49,7 @@ void free_nid(ClientCtx_t *arr, uint8_t nid);
  */
 ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid);
 
-/** 
+/**
  * @brief gets the Packet Flag Type of a given Packet Struct
  *
  * @param *pkt: pointer to a Packet Struct in the memory

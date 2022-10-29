@@ -101,3 +101,23 @@ uint8_t queue_full(Queue_t *queue_ctx)
 	}
 	return ret;
 }
+
+uint8_t queue_remaining(Queue_t *queue_ctx)
+{
+	uint8_t ret = 0;
+	int32_t interator = queue_ctx->head;
+
+	if (queue_empty(queue_ctx)) {
+		ret = queue_ctx->elmt_cnt;
+	}
+	else if (queue_full(queue_ctx)) {
+		ret = 0;
+	}
+	else {
+		while (((interator+1) % queue_ctx->elmt_cnt) != queue_ctx->tail) {
+			ret++;
+			interator++;
+		}
+	}
+	return ret;
+}
