@@ -28,7 +28,6 @@ typedef enum {
 typedef enum {
 	SCAN = 0x00,
 	INFO,
-	SET,
 	SYNC,
 	ACK,
 	FULL,

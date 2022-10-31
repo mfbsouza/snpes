@@ -52,6 +52,9 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 	/* initialize data streams */
 	queue_init(&dev.stream_in);
 	queue_init(&dev.stream_out);
+
+	/* initialize the LoRa device ID */
+	dev.hw.socket->set_id(dev.unique_id);
 }
 
 static void stream_handler()

@@ -5,6 +5,32 @@
 #include <stdint.h>
 
 /**
+ * @brief loads given data to a Packet in signal format
+ *
+ * @param *pkt: pointer to the Packet
+ * @param signal: signal flag define at snpes_types
+ * @param src_uid: UID of the source
+ * @param src_nid: NID of the source
+ * @param dest_uid: UID of the destination
+ * @param dest_nid: NID of the destination
+ */
+void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid, uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid);
+
+/**
+ * @brief loads given data to a Packet in data format
+ *
+ * @param *pkt: pointer to the Packet
+ * @param src_uid: UID of the source node
+ * @param src_nid: NID of the source node
+ * @param dest_uid: UID of the destination node
+ * @param dest_nid: NID of the destination node
+ * @param seq: Sequence Number of the data Packet
+ * @param src: pointer to data source to send in the Packet
+ * @param size: the amount of bytes from data source to send
+ */
+void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq, const void *src, uint8_t size);
+
+/**
  * @brief enqueue a Signal Packet to the stream out of a given protocol device
  *
  * @param *dev: pointer to the protocol device

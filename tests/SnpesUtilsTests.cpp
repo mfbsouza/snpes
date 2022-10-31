@@ -1,5 +1,4 @@
 #include <CppUTest/TestHarness.h>
-#include <cstdint>
 
 extern "C"{
 #include <snpes_utils.h>
