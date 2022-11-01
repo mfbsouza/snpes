@@ -13,7 +13,7 @@ void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid, uint8_t s
 	pkt->dest_uid = dest_uid;
 	pkt->dest_nid = dest_nid;
 	pkt->flgs_seq = ((signal<<4)&0xF0);
-	pkt->data_size = META_SIZE;
+	pkt->data_size = 0;
 }
 
 void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq, const void *src, uint8_t size)
@@ -24,7 +24,7 @@ void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid, uint8_t dest_ui
 	pkt->dest_uid = dest_uid;
 	pkt->dest_nid = dest_nid;
 	pkt->flgs_seq = ((DATA<<4)&0xF0) | (seq&0x0F);
-	pkt->data_size = size + META_SIZE;
+	pkt->data_size = size;
 	memcpy(pkt->data, src, size);
 }
 

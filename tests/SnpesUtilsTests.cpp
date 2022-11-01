@@ -40,7 +40,7 @@ TEST(SnpesUtilsTests, EnqueueSignal)
 	CHECK_EQUAL(0x14, ((Packet_t *)stream_buf)->dest_uid);
 	CHECK_EQUAL(0x16, ((Packet_t *)stream_buf)->dest_nid);
 	CHECK_EQUAL(SYNC, (((Packet_t *)stream_buf)->flgs_seq>>4)&0x0F);
-	CHECK_EQUAL(META_SIZE, ((Packet_t *)stream_buf)->data_size);
+	CHECK_EQUAL(0, ((Packet_t *)stream_buf)->data_size);
 }
 
 TEST(SnpesUtilsTests, EnqueueData)
@@ -53,7 +53,7 @@ TEST(SnpesUtilsTests, EnqueueData)
 	CHECK_EQUAL(0x14, ((Packet_t *)stream_buf)->dest_uid);
 	CHECK_EQUAL(0x16, ((Packet_t *)stream_buf)->dest_nid);
 	CHECK_EQUAL(DATA, (((Packet_t *)stream_buf)->flgs_seq>>4)&0x0F);
-	CHECK_EQUAL(META_SIZE+sizeof(int), ((Packet_t *)stream_buf)->data_size);
+	CHECK_EQUAL(sizeof(int), ((Packet_t *)stream_buf)->data_size);
 	CHECK_EQUAL(13, *(int *)(((Packet_t *)stream_buf)->data));
 }
 

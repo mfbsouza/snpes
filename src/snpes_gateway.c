@@ -22,7 +22,7 @@ static void gateway_state_machine(void);
 void snpes_compute(void)
 {
 	/* check if the gateway dev struct was initialized */
-	if (dev.unique_id == GATEWAY) {
+	if (dev.network_id == GATEWAY) {
 		stream_handler();
 		gateway_state_machine();
 	}
@@ -53,6 +53,9 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 	queue_init(&dev.stream_in);
 	queue_init(&dev.stream_out);
 
+	/* clear the clients buffer */
+	memset(clients, 0, sizeof(ClientCtx_t)*CLT_CNT);
+
 	/* initialize the LoRa device ID */
 	dev.hw.socket->set_id(dev.unique_id);
 }
@@ -67,7 +70,6 @@ static void stream_handler()
 	if (dev.hw.socket->pkt_avail() && !queue_full(&dev.stream_in)) {
 		dest = queue_alloc(&dev.stream_in);
 		dev.hw.socket->pkt_recv(&nid, dest, &size);
-		queue_push(&dev.stream_in, dest);
 	}
 
 	/* if there is some packet to send, send it */
