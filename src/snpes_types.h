@@ -52,7 +52,6 @@ typedef struct {
 typedef struct {
 	uint8_t unique_id;
 	uint8_t network_id;
-	uint8_t type;
 	HwCtx_t hw;
 	Queue_t stream_in;
 	Queue_t stream_out;

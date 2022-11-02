@@ -35,11 +35,10 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 
 SnpesStatus_t snpes_scan(uint8_t *gateway_uid)
 {
-	SnpesStatus_t ret = SNPES_ERROR;
 	uint8_t timeout_cnt = 0;
 
 	/* check if the protocol was initialized */
-	if (hw.socket == NULL) return ret;
+	if (hw.socket == NULL) return SNPES_ERROR;
 
 	while (timeout_cnt < MAX_TIMEOUT_CNT) {
 		/* build a SCAN packet and send it */
@@ -48,13 +47,12 @@ SnpesStatus_t snpes_scan(uint8_t *gateway_uid)
 		/* wait for a gateway response */
 		if (wait_signal(INFO) == SNPES_OK) {
 			*gateway_uid = buf.src_uid;
-			ret = SNPES_OK;
-			break;
+			return SNPES_OK;
 		}
 		/* else, no packet was recived */
 		timeout_cnt++;
 	}
-	return ret;
+	return SNPES_ERROR;
 }
 
 SnpesStatus_t snpes_connect(uint8_t gateway_uid)

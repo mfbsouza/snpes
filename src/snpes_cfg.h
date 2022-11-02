@@ -13,6 +13,6 @@
 #endif /* SNPES_MICRO */
 
 #define MAX_TIMEOUT_CNT 2
-#define TIMEOUT_THLD 2000
+#define TIMEOUT_THLD 5000
 
 #endif /* __SNPES_CFG_H__ */

@@ -1,5 +1,5 @@
-#ifndef __SNPES_GATEWAY_H__
-#define __SNPES_GATEWAY_H__
+#ifndef __SNPES_H__
+#define __SNPES_H__
 
 #include <stdint.h>
 #include "snpes_cfg.h"
@@ -21,4 +21,4 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
  */
 void snpes_compute(void);
 
-#endif /* __SNPES_GATEWAY_H__ */
+#endif /* __SNPES_H__ */

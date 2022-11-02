@@ -1,5 +1,5 @@
-#ifndef __SNPES_NODE_H__
-#define __SNPES_NODE_H__
+#ifndef __SNPES_H__
+#define __SNPES_H__
 
 #include <stdint.h>
 #include "snpes_cfg.h"
@@ -42,4 +42,4 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid);
  */
 //void snpes_compute(void);
 
-#endif /* __SNPES_NODE_H__ */
+#endif /* __SNPES_H__ */

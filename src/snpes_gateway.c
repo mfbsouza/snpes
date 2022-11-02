@@ -37,7 +37,6 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 	/* initialize device info */
 	dev.unique_id = uid;
 	dev.network_id = GATEWAY;
-	dev.type = GATEWAY; // TODO: there is probably no need for this data
 	dev.hw.socket = lora;
 	dev.hw.timer = timer;
 
@@ -57,7 +56,7 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 	memset(clients, 0, sizeof(ClientCtx_t)*CLT_CNT);
 
 	/* initialize the LoRa device ID */
-	dev.hw.socket->set_id(dev.unique_id);
+	dev.hw.socket->set_id(dev.network_id);
 }
 
 static void stream_handler()
@@ -69,7 +68,7 @@ static void stream_handler()
 	/* if there is some packet availiable, save it */
 	if (dev.hw.socket->pkt_avail() && !queue_full(&dev.stream_in)) {
 		dest = queue_alloc(&dev.stream_in);
-		dev.hw.socket->pkt_recv(&nid, dest, &size);
+		dev.hw.socket->pkt_recv(&nid, (uint8_t *)dest, &size);
 	}
 
 	/* if there is some packet to send, send it */

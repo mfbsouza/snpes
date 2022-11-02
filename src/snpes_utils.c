@@ -68,13 +68,7 @@ void free_nid(ClientCtx_t *arr, uint8_t nid)
 {
 	assert(arr);
 	assert(nid > 0);
-	arr[(nid-1)].connected = 0;
-	arr[(nid-1)].unique_id = 0;
-	arr[(nid-1)].network_id = 0;
-	arr[(nid-1)].timer_ref = 0;
-	arr[(nid-1)].timeout = 0;
-	arr[(nid-1)].state = 0;
-	arr[(nid-1)].waiting = 0;
+	memset(&(arr[(nid-1)]), 0, sizeof(ClientCtx_t));
 }
 
 ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid)
@@ -98,5 +92,5 @@ ClientCtx_t *get_waiting_client(ClientCtx_t *arr)
 PacketType_t get_pkt_type(Packet_t *pkt)
 {
 	assert(pkt);
-	return ((pkt->flgs_seq>>4)&0x0F);
+	return (PacketType_t)((pkt->flgs_seq>>4)&0x0F);
 }

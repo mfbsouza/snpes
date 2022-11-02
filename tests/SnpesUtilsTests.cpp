@@ -13,7 +13,6 @@ TEST_GROUP(SnpesUtilsTests)
 	DeviceCtx_t test_dev {
 		0x13,
 		0x45,
-		0,
 		{nullptr, nullptr},
 		{(void *)(stream_buf+(PKT_SIZE*S_IN_CNT)), (uint8_t)PKT_SIZE, (uint8_t)S_OUT_CNT, 0, 0},
 		{(void *)stream_buf, (uint8_t)PKT_SIZE, (uint8_t)S_IN_CNT, 0, 0},
