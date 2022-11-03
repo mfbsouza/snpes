@@ -133,7 +133,13 @@ static void gateway_state_machine()
 		enqueue_signal(&dev, INFO, pkt->src_uid, pkt->src_nid);
 		break;
 	case RESP_SYNC:
-		new_nid = alloc_nid(clients);
+		/* check if the SYNC request is the first or a retry */
+		if (get_pkt_seq_number(pkt) != 0 && (clt = find_client_ctx(clients, pkt->src_uid)) != NULL) {
+			new_nid = clt->network_id;
+		}
+		else {
+			new_nid = alloc_nid(clients);
+		}
 		/* if there isn't free network IDs */
 		if (new_nid == 0) {
 			enqueue_signal(&dev, FULL, pkt->src_uid, pkt->src_nid);

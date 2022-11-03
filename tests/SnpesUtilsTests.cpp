@@ -1,4 +1,5 @@
 #include <CppUTest/TestHarness.h>
+#include <cstdint>
 
 extern "C"{
 #include <snpes_utils.h>
@@ -18,6 +19,25 @@ TEST_GROUP(SnpesUtilsTests)
 		{(void *)stream_buf, (uint8_t)PKT_SIZE, (uint8_t)S_IN_CNT, 0, 0},
 	};
 };
+
+TEST(SnpesUtilsTests, GetSeqNumber)
+{
+	Packet_t test;
+	uint8_t dummy = 0x13;
+	uint8_t ret = 0;
+	build_data(&test, 0x13, 0x13, 0x13, 0x13, 0xF, &dummy, sizeof(uint8_t));
+	ret = get_pkt_seq_number(&test);
+	CHECK_EQUAL(0xF, ret);
+}
+
+TEST(SnpesUtilsTests, FindClient)
+{
+	ClientCtx_t *ret = NULL;
+	test_clients[2].unique_id = 0x13;
+	test_clients[2].connected = CONNECTING;
+	ret = find_client_ctx(test_clients, 0x13);
+	POINTERS_EQUAL(&(test_clients[2]), ret);
+}
 
 TEST(SnpesUtilsTests, GetWaitingClient)
 {

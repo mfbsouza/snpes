@@ -78,6 +78,20 @@ ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid)
 	return &(arr[nid-1]);
 }
 
+ClientCtx_t *find_client_ctx(ClientCtx_t *arr, uint8_t uid)
+{
+	assert(arr);
+	ClientCtx_t *ret = NULL;
+
+	for (int ii = 0; ii < CLT_CNT; ii++) {
+		if (arr[ii].unique_id == uid && arr[ii].connected != NOT_CONNETED) {
+			ret = &(arr[ii]);
+			break;
+		}
+	}
+	return ret;
+}
+
 ClientCtx_t *get_waiting_client(ClientCtx_t *arr)
 {
 	assert(arr);
@@ -93,4 +107,10 @@ PacketType_t get_pkt_type(Packet_t *pkt)
 {
 	assert(pkt);
 	return (PacketType_t)((pkt->flgs_seq>>4)&0x0F);
+}
+
+uint8_t get_pkt_seq_number(Packet_t *pkt)
+{
+	assert(pkt);
+	return (uint8_t)(pkt->flgs_seq&0x0F);
 }

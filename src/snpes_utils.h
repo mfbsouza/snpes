@@ -56,6 +56,7 @@ void enqueue_data(DeviceCtx_t *dev, uint8_t dest_uid, uint8_t dest_nid, uint8_t 
  * @brief allocates a Network ID of a given client list array
  *
  * @param *arr: the client list array
+ * @retval a new Network ID or O for None
  */
 uint8_t alloc_nid(ClientCtx_t *arr);
 
@@ -72,13 +73,24 @@ void free_nid(ClientCtx_t *arr, uint8_t nid);
  *
  * @param *arr: the client list array
  * @param nid: the Network ID of the client
+ * @retval pointer to the Client Context or Null for None
  */
 ClientCtx_t *get_client_ctx(ClientCtx_t *arr, uint8_t nid);
+
+/**
+ * @brief searchs for a client in the client list array and returns it address
+ *
+ * @param *arr: the client list array
+ * @param uid: the unique ID of the client
+ * @retval pointer to the Client Context or Null for None
+ */
+ClientCtx_t *find_client_ctx(ClientCtx_t *arr, uint8_t uid);
 
 /**
  * @brief gets the pointer to the first client that we are waiting for a response
  *
  * @param *arr: the client list array
+ * @retval pointer to the Client Context or Null for None
  */
 ClientCtx_t *get_waiting_client(ClientCtx_t *arr);
 
@@ -86,7 +98,16 @@ ClientCtx_t *get_waiting_client(ClientCtx_t *arr);
  * @brief gets the Packet Flag Type of a given Packet Struct
  *
  * @param *pkt: pointer to a Packet Struct in the memory
+ * @retval The Packet Type
  */
 PacketType_t get_pkt_type(Packet_t *pkt);
+
+/**
+ * @brief gets the Packet sequence number of a given Packet Struct
+ *
+ * @param *pkt: pointer to a Packet Struct in the memory
+ * @retval The Packet Sequence Number
+ */
+uint8_t get_pkt_seq_number(Packet_t *pkt);
 
 #endif /* __SNPES_UTILS_H__ */
