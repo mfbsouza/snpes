@@ -123,6 +123,16 @@ TEST(SnpesGatewayTests, SyncAndAck)
 	avail = 0;
 	/* let the gateway compute */
 	snpes_compute();
+	/* pretend like we lost the packet */
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x1);
+	/* say that there is a packet availible */
+	avail = 1;
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	avail = 0;
+	/* let the gateway compute */
+	snpes_compute();
 	/* check if the gateway tried to send a DATA packet */
 	response = (Packet_t *) send_buf.data;
 	CHECK_EQUAL(0x55, response->src_uid);
