@@ -13,8 +13,9 @@
  * @param src_nid: NID of the source
  * @param dest_uid: UID of the destination
  * @param dest_nid: NID of the destination
+ * @param seq: Sequence Number of the Packet
  */
-void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid, uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid);
+void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid, uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq);
 
 /**
  * @brief loads given data to a Packet in data format

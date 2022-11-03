@@ -90,7 +90,7 @@ TEST(SnpesGatewayTests, Scan)
 	snpes_init(0x55, &TestLora, &TestTimer);
 
 	/* build a fake packet */
-	build_signal(&(recv_buf), SCAN, 0xAA, 0xFF, 0x00, 0x00);
+	build_signal(&(recv_buf), SCAN, 0xAA, 0xFF, 0x00, 0x00, 0x0);
 	/* say that there is a packet availible */
 	avail = 1;
 	/* let the gateway compute */
@@ -114,7 +114,7 @@ TEST(SnpesGatewayTests, SyncAndAck)
 	Packet_t *response = NULL;
 	snpes_init(0x55, &TestLora, &TestTimer);
 	/* build a fake packet */
-	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00);
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	avail = 1;
 	/* let the gateway compute */
@@ -135,14 +135,14 @@ TEST(SnpesGatewayTests, SyncAndAck)
 	CHECK_EQUAL(1, response->data[0]);
 
 	/* build a fake ACK */
-	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00);
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	avail = 1;
 	/* let the gateway compute */
 	snpes_compute();
 
 	/* build a second fake packet */
-	build_signal(&(recv_buf), SYNC, 0xBB, 0xFF, 0x55, 0x00);
+	build_signal(&(recv_buf), SYNC, 0xBB, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	avail = 1;
 	/* let the gateway compute */
@@ -168,13 +168,13 @@ TEST(SnpesGatewayTests, FakeClientAndSyncFull)
 	Packet_t *response = NULL;
 	snpes_init(0x55, &TestLora, &TestTimer);
 	/* fake client packet */
-	build_signal(&(recv_buf), SYNC, 0xAA, 0x01, 0x55, 0x00);
+	build_signal(&(recv_buf), SYNC, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	avail = 1;
 	snpes_compute();
 	/* populate client list */
 	snpes_init(0x55, &TestLora, &TestTimer);
 	for (int i = 0; i <= CLT_CNT; i++) {
-		build_signal(&(recv_buf), SYNC, (uint8_t)i, 0xFF, 0x55, 0x00);
+		build_signal(&(recv_buf), SYNC, (uint8_t)i, 0xFF, 0x55, 0x00, 0x0);
 		avail = 1;
 		snpes_compute();
 	}
@@ -194,7 +194,7 @@ TEST(SnpesGatewayTests, Timeout)
 {
 	Packet_t *response = NULL;
 	snpes_init(0x55, &TestLora, &TestTimerTimeout);
-	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00);
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	avail = 1;
 	snpes_compute();
 	avail = 0;

@@ -42,7 +42,7 @@ SnpesStatus_t snpes_scan(uint8_t *gateway_uid)
 
 	while (timeout_cnt < MAX_TIMEOUT_CNT) {
 		/* build a SCAN packet and send it */
-		build_signal(&buf, SCAN, unique_id, network_id, 0x00, GATEWAY);
+		build_signal(&buf, SCAN, unique_id, network_id, 0x00, GATEWAY, timeout_cnt);
 		hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
 		/* wait for a gateway response */
 		if (wait_signal(INFO) == SNPES_OK) {
@@ -66,7 +66,7 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 
 	while (timeout_cnt < MAX_TIMEOUT_CNT) {
 		/* build a SYNC packet and send it */
-		build_signal(&buf, SYNC, unique_id, network_id, gateway_uid, GATEWAY);
+		build_signal(&buf, SYNC, unique_id, network_id, gateway_uid, GATEWAY, timeout_cnt);
 		hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
 		timer_ref = hw.timer->millis();
 
@@ -82,7 +82,7 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 					/* update the LoRa ID */
 					hw.socket->set_id(network_id);
 					/* send ACK to the gateway */
-					build_signal(&buf, ACK, unique_id, network_id, gateway_uid, buf.src_nid);
+					build_signal(&buf, ACK, unique_id, network_id, gateway_uid, buf.src_nid, 0x0);
 					hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
 					/* now we can safely return */
 					return SNPES_OK;

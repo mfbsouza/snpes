@@ -5,14 +5,14 @@
 #include <string.h>
 #include <assert.h>
 
-void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid, uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid)
+void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid, uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq)
 {
 	assert(pkt);
 	pkt->src_uid = src_uid;
 	pkt->src_nid = src_nid;
 	pkt->dest_uid = dest_uid;
 	pkt->dest_nid = dest_nid;
-	pkt->flgs_seq = ((signal<<4)&0xF0);
+	pkt->flgs_seq = ((signal<<4)&0xF0) | (seq&0x0F);
 	pkt->data_size = 0;
 }
 
@@ -35,7 +35,7 @@ void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uin
 
 	if (!queue_full(&dev->stream_out)) {
 		dest = (Packet_t *) queue_alloc(&dev->stream_out);
-		build_signal(dest, signal, dev->unique_id, dev->network_id, dest_uid, dest_nid);
+		build_signal(dest, signal, dev->unique_id, dev->network_id, dest_uid, dest_nid, 0x0);
 	}
 }
 
