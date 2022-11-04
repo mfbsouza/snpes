@@ -15,6 +15,7 @@ static ClientCtx_t clients[CLT_CNT] = {0};
 /* private functions */
 
 static void stream_handler(void);
+static void alive_checker(void);
 static void gateway_state_machine(void);
 
 /* functions implementations */
@@ -25,6 +26,7 @@ void snpes_compute(void)
 	if (dev.network_id == GATEWAY) {
 		stream_handler();
 		gateway_state_machine();
+		alive_checker();
 	}
 }
 
@@ -75,6 +77,27 @@ static void stream_handler()
 	if (!queue_empty(&dev.stream_out)) {
 		src = (Packet_t *) queue_pop(&dev.stream_out);
 		dev.hw.socket->pkt_send(src->dest_nid, (uint8_t *)src, (src->data_size + META_SIZE));
+	}
+}
+
+static void alive_checker()
+{
+	ClientCtx_t *clt = NULL;
+	uint8_t signal_pkt[META_SIZE] = {0};
+
+	/* look for a idle client */
+	for (int ii = 0; ii < CLT_CNT; ii++) {
+		/* if it's a connect client check how many seconds has passed since the last communication */
+		if (clients[ii].connected == CONNECTED && ((uint32_t)(dev.hw.timer->millis()/1000) - clients[ii].alive_ref) >= ALIVE_THLD) {
+			clt = &(clients[ii]);
+			break;
+		}
+	}
+
+	/* send a ALIVE signal */
+	if (clt != NULL) {
+		build_signal((Packet_t *)signal_pkt, ALIVE, dev.unique_id, dev.network_id, clt->unique_id, clt->network_id, 0x0);
+		dev.hw.socket->pkt_send(((Packet_t *)signal_pkt)->dest_nid, signal_pkt, META_SIZE);
 	}
 }
 
@@ -148,7 +171,7 @@ static void gateway_state_machine()
 		else {
 			clt = get_client_ctx(clients, new_nid);
 			clt->unique_id = pkt->src_uid;
-			clt->timeout = 0;
+			clt->timeout_cnt = 0;
 			clt->state = WAIT_ACK;
 			clt->timer_ref = dev.hw.timer->millis();
 			clt->waiting = 1;
@@ -163,15 +186,17 @@ static void gateway_state_machine()
 				clt->connected = CONNECTED;
 				clt->state = IDLE;
 				clt->waiting = 0;
-				clt->timeout = 0;
+				clt->timeout_cnt = 0;
 				clt->timer_ref = 0;
+				/* save the last time the gateway talked to this client in seconds */
+				clt->alive_ref = (uint32_t)(dev.hw.timer->millis()/1000);
 			}
 		}
 		/* *maybe* we're here because we're still waiting an ACK from a client */
 		else if (clt != NULL) {
 			if ((dev.hw.timer->millis() - clt->timer_ref) >= TIMEOUT_THLD) {
 				/* if there is no response till now, and we reached a maximum amount of trys */
-				if (++clt->timeout == MAX_TIMEOUT_CNT) {
+				if (++clt->timeout_cnt == MAX_TIMEOUT_CNT) {
 					/* just deallocate the Network ID */
 					free_nid(clients, clt->network_id);
 				}

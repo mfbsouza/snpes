@@ -53,8 +53,7 @@ void enqueue_data(DeviceCtx_t *dev, uint8_t dest_uid, uint8_t dest_nid, uint8_t 
 uint8_t alloc_nid(ClientCtx_t *arr)
 {
 	assert(arr);
-	int nid;
-	for (nid = 0; nid < CLT_CNT; nid++) {
+	for (int nid = 0; nid < CLT_CNT; nid++) {
 		if (arr[nid].connected == NOT_CONNETED) {
 			arr[nid].connected = CONNECTING;
 			arr[nid].network_id = (uint8_t)(nid+1);
@@ -92,12 +91,13 @@ ClientCtx_t *find_client_ctx(ClientCtx_t *arr, uint8_t uid)
 	return ret;
 }
 
+// TODO: i don't like that "waiting" word
 ClientCtx_t *get_waiting_client(ClientCtx_t *arr)
 {
 	assert(arr);
-	for (int i = 0; i < CLT_CNT; i++) {
-		if (arr[i].waiting == 1) {
-			return &(arr[i]);
+	for (int ii = 0; ii < CLT_CNT; ii++) {
+		if (arr[ii].waiting == 1) {
+			return &(arr[ii]);
 		}
 	}
 	return NULL;

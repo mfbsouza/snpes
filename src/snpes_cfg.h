@@ -13,6 +13,7 @@
 #endif /* SNPES_MICRO */
 
 #define MAX_TIMEOUT_CNT 2
-#define TIMEOUT_THLD 5000
+#define TIMEOUT_THLD 5000 // 5 seconds
+#define ALIVE_THLD   5*60 // 5 minutes
 
 #endif /* __SNPES_CFG_H__ */

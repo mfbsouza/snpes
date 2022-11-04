@@ -31,17 +31,23 @@ typedef enum {
 	SYNC,
 	ACK,
 	FULL,
-	DATA
+	DATA,
+	ALIVE
 } PacketType_t;
 
 typedef struct {
+	/* client info */
 	uint8_t unique_id;
 	uint8_t network_id;
+	/* connection state */
 	GwStates_t state;
+	/* flags */
 	ConnState_t connected;
-	uint32_t timer_ref;
-	uint8_t timeout;
+	uint8_t timeout_cnt;
 	uint8_t waiting;
+	/* time references */
+	uint32_t timer_ref;
+	uint32_t alive_ref;
 } ClientCtx_t;
 
 typedef struct {

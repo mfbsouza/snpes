@@ -111,7 +111,7 @@ TEST(SnpesUtilsTests, FreeNID)
 	CHECK_EQUAL(0, test_clients[0].network_id);
 	CHECK_EQUAL(0, test_clients[0].unique_id);
 	CHECK_EQUAL(0, test_clients[0].timer_ref);
-	CHECK_EQUAL(0, test_clients[0].timeout);
+	CHECK_EQUAL(0, test_clients[0].timeout_cnt);
 	CHECK_EQUAL(0, test_clients[0].state);
 }
 
