@@ -68,6 +68,7 @@ static void stream_handler()
 	Packet_t *src = NULL;
 
 	/* if there is some packet availiable, save it */
+	// TODO: this maybe should be a "while" instead of a "if"
 	if (dev.hw.socket->pkt_avail() && !queue_full(&dev.stream_in)) {
 		dest = queue_alloc(&dev.stream_in);
 		dev.hw.socket->pkt_recv(&nid, (uint8_t *)dest, &size);
@@ -89,14 +90,34 @@ static void alive_checker()
 	for (int ii = 0; ii < CLT_CNT; ii++) {
 		/* if it's a connect client check how many seconds has passed since the last communication */
 		if (clients[ii].connected == CONNECTED && ((uint32_t)(dev.hw.timer->millis()/1000) - clients[ii].alive_ref) >= ALIVE_THLD) {
-			clt = &(clients[ii]);
-			break;
+			/* is this the first time im testing this client? */
+			if (clients[ii].timer_ref != 0) {
+				/* well, it's not, but should i send another ALIVE signal? */
+				if ((dev.hw.timer->millis() - clients[ii].timer_ref) >= TIMEOUT_THLD) {
+					if(++clients[ii].timeout_cnt == MAX_TIMEOUT_CNT) {
+						/* to many tries already, the client must be dead */
+						free_nid(clients, clients[ii].network_id);
+					}
+					else {
+						/* yeh, i should send another one */
+						clt = &(clients[ii]);
+						break;
+					}
+				}
+				/* no, i shouldn't, just keep looking for another client */
+			}
+			/* it is */
+			else {
+				clt = &(clients[ii]);
+				break;
+			}
 		}
 	}
 
 	/* send a ALIVE signal */
 	if (clt != NULL) {
 		build_signal((Packet_t *)signal_pkt, ALIVE, dev.unique_id, dev.network_id, clt->unique_id, clt->network_id, 0x0);
+		clt->timer_ref = dev.hw.timer->millis();
 		dev.hw.socket->pkt_send(((Packet_t *)signal_pkt)->dest_nid, signal_pkt, META_SIZE);
 	}
 }
