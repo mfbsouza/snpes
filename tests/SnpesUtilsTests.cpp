@@ -42,10 +42,12 @@ TEST(SnpesUtilsTests, FindClient)
 TEST(SnpesUtilsTests, GetWaitingClient)
 {
 	ClientCtx_t *ret = NULL;
-	test_clients[2].waiting = 1;
+	test_clients[2].connected = CONNECTING;
+	test_clients[2].timer_ref = 1;
 	ret = get_waiting_client(test_clients);
 	POINTERS_EQUAL(&(test_clients[2]), ret);
-	test_clients[2].waiting = 0;
+	test_clients[2].connected = CONNECTED;
+	test_clients[2].timer_ref = 1;
 	ret = get_waiting_client(test_clients);
 	POINTERS_EQUAL(NULL, ret);
 }

@@ -44,7 +44,6 @@ typedef struct {
 	/* flags */
 	ConnState_t connected;
 	uint8_t timeout_cnt;
-	uint8_t waiting;
 	/* time references */
 	uint32_t timer_ref;
 	uint32_t alive_ref;

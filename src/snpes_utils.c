@@ -96,7 +96,7 @@ ClientCtx_t *get_waiting_client(ClientCtx_t *arr)
 {
 	assert(arr);
 	for (int ii = 0; ii < CLT_CNT; ii++) {
-		if (arr[ii].waiting == 1) {
+		if (arr[ii].connected == CONNECTING && arr[ii].timer_ref != 0) {
 			return &(arr[ii]);
 		}
 	}

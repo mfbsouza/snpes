@@ -116,7 +116,7 @@ static void alive_checker()
 
 	/* send a ALIVE signal */
 	if (clt != NULL) {
-		build_signal((Packet_t *)signal_pkt, ALIVE, dev.unique_id, dev.network_id, clt->unique_id, clt->network_id, 0x0);
+		build_signal((Packet_t *)signal_pkt, ALIVE, dev.unique_id, dev.network_id, clt->unique_id, clt->network_id, clt->timeout_cnt);
 		clt->timer_ref = dev.hw.timer->millis();
 		dev.hw.socket->pkt_send(((Packet_t *)signal_pkt)->dest_nid, signal_pkt, META_SIZE);
 	}
@@ -195,7 +195,6 @@ static void gateway_state_machine()
 			clt->timeout_cnt = 0;
 			clt->state = WAIT_ACK;
 			clt->timer_ref = dev.hw.timer->millis();
-			clt->waiting = 1;
 			enqueue_data(&dev, clt->unique_id, pkt->src_nid, 0x00, &new_nid, sizeof(uint8_t));
 		}
 		break;
@@ -206,7 +205,6 @@ static void gateway_state_machine()
 				/* update client info as connected */
 				clt->connected = CONNECTED;
 				clt->state = IDLE;
-				clt->waiting = 0;
 				clt->timeout_cnt = 0;
 				clt->timer_ref = 0;
 				/* save the last time the gateway talked to this client in seconds */

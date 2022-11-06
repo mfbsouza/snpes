@@ -281,4 +281,20 @@ TEST(SnpesGatewayTests, Alive)
 	CHECK_EQUAL(ALIVE, ((response->flgs_seq)>>4)&0x0F);
 	CHECK_EQUAL(0, response->flgs_seq&0x0F);
 	CHECK_EQUAL(0, response->data_size);
+	/* force a retry */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(3, "mock_timer").andReturnValue(((ALIVE_THLD*1000)+1000)+TIMEOUT_THLD);
+	snpes_compute();
+	response = (Packet_t *) send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(ALIVE, ((response->flgs_seq)>>4)&0x0F);
+	CHECK_EQUAL(1, response->flgs_seq&0x0F);
+	CHECK_EQUAL(0, response->data_size);
+	/* force a retry, again */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(((ALIVE_THLD*1000)+1000)+TIMEOUT_THLD*2);
+	snpes_compute();
 }
