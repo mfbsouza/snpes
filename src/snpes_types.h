@@ -14,8 +14,9 @@ typedef enum {
 
 typedef enum {
 	SEND_INFO = 0x00,
-	RESP_SYNC,
+	RECV_SYNC,
 	WAIT_ACK,
+	RECV_ACK,
 	IDLE
 } GwStates_t;
 

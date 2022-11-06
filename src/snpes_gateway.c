@@ -141,7 +141,7 @@ static void gateway_state_machine()
 				state = SEND_INFO;
 			}
 			else if (get_pkt_type(pkt) == SYNC && pkt->dest_uid == dev.unique_id) {
-				state = RESP_SYNC;
+				state = RECV_SYNC;
 			}
 			else {
 				/* probably a corrupted packet, just ignore it */
@@ -153,7 +153,8 @@ static void gateway_state_machine()
 			clt = get_client_ctx(clients, pkt->src_nid);
 			if (clt->connected != NOT_CONNETED) {
 				/* it's *actually* a client */
-				state = clt->state;
+				if (get_pkt_type(pkt) == ACK) state = RECV_ACK;
+				else state = clt->state;
 			}
 			else {
 				/* that's not a real client, ignore it */
@@ -176,7 +177,7 @@ static void gateway_state_machine()
 	case SEND_INFO:
 		enqueue_signal(&dev, INFO, pkt->src_uid, pkt->src_nid);
 		break;
-	case RESP_SYNC:
+	case RECV_SYNC:
 		/* check if the SYNC request is the first or a retry */
 		if (get_pkt_seq_number(pkt) != 0 && (clt = find_client_ctx(clients, pkt->src_uid)) != NULL) {
 			new_nid = clt->network_id;
@@ -199,33 +200,27 @@ static void gateway_state_machine()
 		}
 		break;
 	case WAIT_ACK:
-		/* check if we are here because maybe there is a ACK packet */
-		if (pkt != NULL) {
-			if (get_pkt_type(pkt) == ACK) {
-				/* update client info as connected */
-				clt->connected = CONNECTED;
-				clt->state = IDLE;
-				clt->timeout_cnt = 0;
-				clt->timer_ref = 0;
-				/* save the last time the gateway talked to this client in seconds */
-				clt->alive_ref = (uint32_t)(dev.hw.timer->millis()/1000);
+		if ((dev.hw.timer->millis() - clt->timer_ref) >= TIMEOUT_THLD) {
+			/* if there is no response till now, and we reached a maximum amount of trys */
+			if (++clt->timeout_cnt == MAX_TIMEOUT_CNT) {
+				/* just deallocate the Network ID */
+				free_nid(clients, clt->network_id);
+			}
+			/* else, try again */
+			else {
+				clt->timer_ref = dev.hw.timer->millis();
+				enqueue_data(&dev, clt->unique_id, NODE, 0x00, &(clt->network_id), sizeof(uint8_t));
 			}
 		}
-		/* *maybe* we're here because we're still waiting an ACK from a client */
-		else if (clt != NULL) {
-			if ((dev.hw.timer->millis() - clt->timer_ref) >= TIMEOUT_THLD) {
-				/* if there is no response till now, and we reached a maximum amount of trys */
-				if (++clt->timeout_cnt == MAX_TIMEOUT_CNT) {
-					/* just deallocate the Network ID */
-					free_nid(clients, clt->network_id);
-				}
-				/* else, try again */
-				else {
-					clt->timer_ref = dev.hw.timer->millis();
-					enqueue_data(&dev, clt->unique_id, NODE, 0x00, &(clt->network_id), sizeof(uint8_t));
-				}
-			}
-		}
+		break;
+	case RECV_ACK:
+		/* update client info as connected */
+		clt->connected = CONNECTED;
+		clt->state = IDLE;
+		clt->timeout_cnt = 0;
+		clt->timer_ref = 0;
+		/* save the last time the gateway talked to this client in seconds */
+		clt->alive_ref = (uint32_t)(dev.hw.timer->millis()/1000);
 		break;
 	case IDLE:
 		break;
