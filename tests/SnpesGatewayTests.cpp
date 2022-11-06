@@ -62,6 +62,11 @@ static uint32_t timeout_millis()
 	return (uint32_t)time_ref;
 }
 
+static uint32_t mock_timer()
+{
+	return (uint32_t)mock().actualCall(__func__).returnIntValue();
+}
+
 }
 
 TEST_GROUP(SnpesGatewayTests)
@@ -81,6 +86,11 @@ TEST_GROUP(SnpesGatewayTests)
 	TimerItf_t TestTimerTimeout = {
 		nullptr,
 		timeout_millis
+	};
+
+	TimerItf_t MockTimer = {
+		nullptr,
+		mock_timer
 	};
 
 	void teardown() {
@@ -234,4 +244,41 @@ TEST(SnpesGatewayTests, Timeout)
 	CHECK_EQUAL(0, response->flgs_seq&0x0F);
 	CHECK_EQUAL(0, response->data_size);
 	CHECK_EQUAL(0, response->data[0]);
+}
+
+TEST(SnpesGatewayTests, Alive)
+{
+	Packet_t *response = NULL;
+	snpes_init(0x55, &TestLora, &MockTimer);
+	/* build a fake packet */
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectOneCall("mock_timer").andReturnValue(2);
+	/* let the gateway compute */
+	snpes_compute();
+	/* build a fake ACK */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1000);
+	/* let the gateway compute */
+	snpes_compute();
+	/* now that we are connect, lest fake that a long time has passed */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(((ALIVE_THLD*1000)+1000));
+	snpes_compute();
+	response = (Packet_t *) send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(ALIVE, ((response->flgs_seq)>>4)&0x0F);
+	CHECK_EQUAL(0, response->flgs_seq&0x0F);
+	CHECK_EQUAL(0, response->data_size);
 }

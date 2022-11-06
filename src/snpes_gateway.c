@@ -84,7 +84,7 @@ static void stream_handler()
 static void alive_checker()
 {
 	ClientCtx_t *clt = NULL;
-	uint8_t signal_pkt[META_SIZE] = {0};
+	static uint8_t signal_pkt[META_SIZE] = {0};
 
 	/* look for a idle client */
 	for (int ii = 0; ii < CLT_CNT; ii++) {
