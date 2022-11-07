@@ -10,7 +10,7 @@ Pernambuco in Brazil.
 
 SNPES is licensed under GNU General Public License Version 2
 
-## Contruiting
+## Contributing
 
 Check out [here!](CONTRIBUTING.md) 
 
