@@ -81,3 +81,21 @@ TEST(MemoryManagerTests, DifferentBlockSizes)
 	CHECK_EQUAL(5, buffer[8]);
 	CHECK_EQUAL(5, buffer[11]);
 }
+
+TEST(MemoryManagerTests, RemainingBytes)
+{
+	void *ptr = NULL;
+	uint8_t ret = 0;
+	memmgr_init(&heap, (void *)buffer, 12);
+	ret = memmgr_remaining(&heap);
+	CHECK_EQUAL(12, ret);
+	ptr = memmgr_alloc(&heap, 5);
+	ret = memmgr_remaining(&heap);
+	CHECK_EQUAL(4, ret);
+	memmgr_alloc(&heap, 2);
+	ret = memmgr_remaining(&heap);
+	CHECK_EQUAL(0, ret);
+	memmgr_free(&heap, ptr);
+	ret = memmgr_remaining(&heap);
+	CHECK_EQUAL(8, ret);
+}

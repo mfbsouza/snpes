@@ -96,3 +96,16 @@ void memmgr_free(MemMgr_t *mem_ctx, void *addr)
 		*ptr = GET_SIZE(ptr) + GET_SIZE(ptr + GET_SIZE(ptr));
 	}
 }
+
+uint8_t memmgr_remaining(MemMgr_t *mem_ctx)
+{
+	uint8_t ret = 0;
+	uint8_t *ptr = (uint8_t *)mem_ctx->heap_start;
+
+	while (ptr < (uint8_t *)mem_ctx->heap_end) {
+		if (!IS_ALLOCATED(ptr)) ret += GET_SIZE(ptr);
+		ptr += GET_SIZE(ptr);
+	}
+
+	return ret;
+}

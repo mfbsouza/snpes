@@ -48,4 +48,13 @@ void* memmgr_alloc(MemMgr_t *mem_ctx, uint8_t size);
  */
 void memmgr_free(MemMgr_t *mem_ctx, void *addr);
 
+/**
+ * @brief computes the remaining free bytes of a given MemMgr heap
+ *
+ * @param *mem_ctx: The MemMgr Context Struct
+ *
+ * @retval the amount of free bytes in the MemMgr Heap
+ */
+uint8_t memmgr_remaining(MemMgr_t *mem_ctx);
+
 #endif /* __MEMORY_MANAGER_H__ */
