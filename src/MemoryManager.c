@@ -99,6 +99,8 @@ void memmgr_free(MemMgr_t *mem_ctx, void *addr)
 
 uint8_t memmgr_remaining(MemMgr_t *mem_ctx)
 {
+	assert(mem_ctx);
+
 	uint8_t ret = 0;
 	uint8_t *ptr = (uint8_t *)mem_ctx->heap_start;
 
