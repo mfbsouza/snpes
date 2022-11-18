@@ -16,6 +16,8 @@
 #define S_OUT_CNT  BUF_CNT-S_IN_CNT
 /* maxium amount of clients */
 #define CLT_CNT    16
+/* maxium amount of packets per data transmission */
+#define MAX_PKT_CNT 2
 
 /* SNPES_MICRO CONFIG */
 #else
@@ -32,6 +34,8 @@
 #define S_OUT_CNT  BUF_CNT-S_IN_CNT
 /* maxium amount of clients */
 #define CLT_CNT    8
+/* maxium amount of packets per data transmission */
+#define MAX_PKT_CNT 1
 #endif /* SNPES_ CONFIG */
 
 #define MAX_TIMEOUT_CNT 2

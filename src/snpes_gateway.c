@@ -132,7 +132,7 @@ static void gateway_state_machine()
 
 	/* figure out the protocol state */
 
-	/* Always give priority to packets sitting in the stream in queue */
+	/* Always give priority to packets sitting in the stream input queue */
 	if (!queue_empty(&dev.stream_in)) {
 		pkt = (Packet_t *) queue_pop(&dev.stream_in);
 		/* if the packet isn't from a client */
@@ -154,6 +154,15 @@ static void gateway_state_machine()
 			clt = get_client_ctx(clients, pkt->src_nid);
 			if (clt->connected != NOT_CONNETED) {
 				/* it's *actually* a client */
+				/**
+				 * TODO: This feels like a fault: if the gateway gets a ACK signal
+				 * and if the node that send this signal is in the client list, it
+				 * just send this client to the RECV_ACK state without checking the
+				 * previous state of the connection.
+				 * it's doing this because the ACK can influence the WAIT_ACK state
+				 * and also the Alive Checker block, so by doing this way it can
+				 * handle both cases.
+				 * */
 				if (get_pkt_type(pkt) == ACK) state = RECV_ACK;
 				else state = clt->state;
 			}
