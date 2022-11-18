@@ -115,6 +115,7 @@ static void alive_checker()
 	}
 
 	/* send a ALIVE signal */
+	// TODO: maybe this module shouldn't send the Packet directly using the hw, instead it should enqueue the signal in the stream output
 	if (clt != NULL) {
 		build_signal((Packet_t *)signal_pkt, ALIVE, dev.unique_id, dev.network_id, clt->unique_id, clt->network_id, clt->timeout_cnt);
 		clt->timer_ref = dev.hw.timer->millis();
