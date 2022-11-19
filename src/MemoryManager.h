@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define BYTE_ALIGN 4
-#define HEADER_SIZE 1
+#define BYTE_ALIGN 8
+#define HEADER_SIZE 2
 #define FOOTER_SIZE HEADER_SIZE
 #define METADATA_SIZE HEADER_SIZE*2
 
@@ -28,7 +28,7 @@ typedef struct {
  *
  * @retval 0 for no errors, -1 for not a byte aligned region
  */
-int8_t memmgr_init(MemMgr_t *mem_ctx, void *start, uint8_t size);
+int8_t memmgr_init(MemMgr_t *mem_ctx, void *start, uint16_t size);
 
 /**
  * @brief allocates a continuous memory region
@@ -38,7 +38,7 @@ int8_t memmgr_init(MemMgr_t *mem_ctx, void *start, uint8_t size);
  *
  * @retval the start address of the allocated memory region
  */
-void* memmgr_alloc(MemMgr_t *mem_ctx, uint8_t size);
+void* memmgr_alloc(MemMgr_t *mem_ctx, uint16_t size);
 
 /**
  * @brief allocates a continuous memory region
@@ -55,6 +55,6 @@ void memmgr_free(MemMgr_t *mem_ctx, void *addr);
  *
  * @retval the amount of free bytes in the MemMgr Heap
  */
-uint8_t memmgr_remaining(MemMgr_t *mem_ctx);
+uint16_t memmgr_remaining(MemMgr_t *mem_ctx);
 
 #endif /* __MEMORY_MANAGER_H__ */

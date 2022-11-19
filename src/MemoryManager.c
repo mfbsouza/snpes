@@ -2,10 +2,10 @@
 #include <string.h>
 #include <assert.h>
 
-#define IS_ALLOCATED(x) (*(x) & 1)
-#define GET_SIZE(x) ((uint8_t)(*(x) & -2))
+#define IS_ALLOCATED(x) (*(uint16_t *)(x) & 1)
+#define GET_SIZE(x) ((uint16_t)(*(uint16_t *)(x) & -2))
 
-int8_t memmgr_init(MemMgr_t *mem_ctx, void *start, uint8_t size)
+int8_t memmgr_init(MemMgr_t *mem_ctx, void *start, uint16_t size)
 {
 	assert(mem_ctx);
 	assert(start);
@@ -19,13 +19,13 @@ int8_t memmgr_init(MemMgr_t *mem_ctx, void *start, uint8_t size)
 	mem_ctx->heap_end = (uint8_t *)start + size;
 
 	/* initialize the memory as a single free block of chunk */
-	*(uint8_t *)mem_ctx->heap_start = size;
-	*((uint8_t *)mem_ctx->heap_end - HEADER_SIZE) = size;
+	*(uint16_t *)mem_ctx->heap_start = size;
+	*(uint16_t *)((uint8_t *)mem_ctx->heap_end - HEADER_SIZE) = size;
 
 	return 0;
 }
 
-void* memmgr_alloc(MemMgr_t *mem_ctx, uint8_t size)
+void* memmgr_alloc(MemMgr_t *mem_ctx, uint16_t size)
 {
 	assert(mem_ctx);
 	assert(size > 0);
@@ -49,13 +49,13 @@ void* memmgr_alloc(MemMgr_t *mem_ctx, uint8_t size)
 		/* check if we need to break the chunk in two */
 		if (size < GET_SIZE(ptr)) {
 			/* update the new free chunk header */
-			*(ptr + size) = GET_SIZE(ptr) - size;
+			*(uint16_t *)(ptr + size) = GET_SIZE(ptr) - size;
 			/* update the new free chunk footer */
-			*(ptr + (GET_SIZE(ptr) - HEADER_SIZE)) = GET_SIZE(ptr) - size;
+			*(uint16_t *)(ptr + (GET_SIZE(ptr) - HEADER_SIZE)) = GET_SIZE(ptr) - size;
 		}
 		/* update the new allocated chunk's foot and header */
-		*(ptr + (size - HEADER_SIZE)) = size + 1;
-		*ptr = size + 1;
+		*(uint16_t *)(ptr + (size - HEADER_SIZE)) = size + 1;
+		*(uint16_t *)ptr = size + 1;
 		ret = (void *)(ptr + HEADER_SIZE);
 	}
 
@@ -75,33 +75,33 @@ void memmgr_free(MemMgr_t *mem_ctx, void *addr)
 		return;
 
 	/* free the chunk */
-	ptr -= (uint8_t)HEADER_SIZE;
-	*ptr = GET_SIZE(ptr);
-	*(ptr + GET_SIZE(ptr) - HEADER_SIZE) = GET_SIZE(ptr);
+	ptr -= HEADER_SIZE;
+	*(uint16_t *)ptr = GET_SIZE(ptr);
+	*(uint16_t *)(ptr + GET_SIZE(ptr) - HEADER_SIZE) = GET_SIZE(ptr);
 
 	/* merge free neighbors chunk into one */
-	if (ptr > (uint8_t *)mem_ctx->heap_start && !IS_ALLOCATED((ptr-FOOTER_SIZE))) {
+	if (ptr-FOOTER_SIZE > (uint8_t *)mem_ctx->heap_start && !IS_ALLOCATED((ptr-FOOTER_SIZE))) {
 		/* update the new free chunk header */
-		*(ptr - GET_SIZE((ptr-FOOTER_SIZE))) = GET_SIZE(ptr) + GET_SIZE(ptr-FOOTER_SIZE);
+		*(uint16_t *)(ptr - GET_SIZE((ptr-FOOTER_SIZE))) = GET_SIZE(ptr) + GET_SIZE(ptr-FOOTER_SIZE);
 		/* update the new free chunk footer */
-		*(ptr + (GET_SIZE(ptr) - HEADER_SIZE)) = GET_SIZE(ptr) + GET_SIZE(ptr-FOOTER_SIZE);
+		*(uint16_t *)(ptr + (GET_SIZE(ptr) - HEADER_SIZE)) = GET_SIZE(ptr) + GET_SIZE(ptr-FOOTER_SIZE);
 		/* update pointer the the new free chunk */
 		ptr -= GET_SIZE((ptr-FOOTER_SIZE));
 	}
-	if (ptr < (uint8_t *)mem_ctx->heap_end && !IS_ALLOCATED((ptr+GET_SIZE(ptr)))) {
+	if (ptr+GET_SIZE(ptr) < (uint8_t *)mem_ctx->heap_end && !IS_ALLOCATED((ptr+GET_SIZE(ptr)))) {
 		/* update the new free chunk footer */
-		*(ptr + GET_SIZE(ptr) + GET_SIZE(ptr + GET_SIZE(ptr)) - HEADER_SIZE)
+		*(uint16_t *)(ptr + GET_SIZE(ptr) + GET_SIZE(ptr + GET_SIZE(ptr)) - HEADER_SIZE)
 			= GET_SIZE(ptr) + GET_SIZE(ptr + GET_SIZE(ptr));
 		/* update the new free chunk header */
-		*ptr = GET_SIZE(ptr) + GET_SIZE(ptr + GET_SIZE(ptr));
+		*(uint16_t *)ptr = GET_SIZE(ptr) + GET_SIZE(ptr + GET_SIZE(ptr));
 	}
 }
 
-uint8_t memmgr_remaining(MemMgr_t *mem_ctx)
+uint16_t memmgr_remaining(MemMgr_t *mem_ctx)
 {
 	assert(mem_ctx);
 
-	uint8_t ret = 0;
+	uint16_t ret = 0;
 	uint8_t *ptr = (uint8_t *)mem_ctx->heap_start;
 
 	while (ptr < (uint8_t *)mem_ctx->heap_end) {
