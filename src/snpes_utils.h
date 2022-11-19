@@ -96,6 +96,14 @@ ClientCtx_t *find_client_ctx(ClientCtx_t *arr, uint8_t uid);
 ClientCtx_t *get_waiting_client(ClientCtx_t *arr);
 
 /**
+ * @brief gets the pointer to the first client that has data availible to read
+ *
+ * @param *arr: the client list array
+ * @retval pointer to the Client Context or Null for None
+ */
+ClientCtx_t *get_data_avail_client(ClientCtx_t *arr);
+
+/**
  * @brief gets the Packet Flag Type of a given Packet Struct
  *
  * @param *pkt: pointer to a Packet Struct in the memory

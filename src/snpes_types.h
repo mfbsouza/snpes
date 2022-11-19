@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "snpes_cfg.h"
 #include "CircularQueue.h"
+#include "MemoryManager.h"
 #include "ConnInterface.h"
 #include "TimerInterface.h"
 
@@ -17,7 +18,10 @@ typedef enum {
 	RECV_SYNC,
 	WAIT_ACK,
 	RECV_ACK,
-	IDLE
+	IDLE,
+	WAIT_DATA,
+	RECV_DATA,
+	DATA_AVAIL
 } GwStates_t;
 
 typedef enum {
@@ -33,7 +37,9 @@ typedef enum {
 	ACK,
 	FULL,
 	DATA,
-	ALIVE
+	ALIVE,
+	TRANS_START,
+	TRANS_RETRY
 } PacketType_t;
 
 typedef struct {
@@ -44,10 +50,15 @@ typedef struct {
 	GwStates_t state;
 	/* flags */
 	ConnState_t connected;
-	uint8_t timeout_cnt;
 	/* time references */
+	uint8_t timeout_cnt;
 	uint32_t timer_ref;
 	uint32_t alive_ref;
+	/* data buffer */
+	void *data;
+	uint16_t data_size;
+	uint8_t pkt_cnt;
+	uint8_t expected_pkt;
 } ClientCtx_t;
 
 typedef struct {
@@ -61,6 +72,7 @@ typedef struct {
 	HwCtx_t hw;
 	Queue_t stream_in;
 	Queue_t stream_out;
+	MemMgr_t mem;
 } DeviceCtx_t;
 
 typedef struct {

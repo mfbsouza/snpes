@@ -96,7 +96,19 @@ ClientCtx_t *get_waiting_client(ClientCtx_t *arr)
 {
 	assert(arr);
 	for (int ii = 0; ii < CLT_CNT; ii++) {
-		if (arr[ii].connected == CONNECTING && arr[ii].timer_ref != 0) {
+		if (arr[ii].state == WAIT_ACK || arr[ii].state == WAIT_DATA) {
+			return &(arr[ii]);
+		}
+	}
+	return NULL;
+}
+
+// TODO: i don't like that function name
+ClientCtx_t *get_data_avail_client(ClientCtx_t *arr)
+{
+	assert(arr);
+	for (int ii = 0; ii < CLT_CNT; ii++) {
+		if (arr[ii].state == DATA_AVAIL) {
 			return &(arr[ii]);
 		}
 	}

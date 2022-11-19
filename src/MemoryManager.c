@@ -36,7 +36,7 @@ void* memmgr_alloc(MemMgr_t *mem_ctx, uint16_t size)
 	/* compute how many bytes we will need to alloc */
 	size += METADATA_SIZE;
 	if (size % BYTE_ALIGN != 0) {
-		size = (uint8_t)(size + BYTE_ALIGN - (size % BYTE_ALIGN));
+		size = (uint16_t)(size + BYTE_ALIGN - (size % BYTE_ALIGN));
 	}
 
 	/* look for free chunk that's big enough for what we want */

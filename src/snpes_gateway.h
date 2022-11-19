@@ -21,4 +21,20 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
  */
 void snpes_compute(void);
 
+/**
+ * @brief check if there is available data to read
+ *
+ * @retval 0 for no data, or the amount of data to read
+ */
+uint16_t snpes_data_available(void);
+
+/**
+ * @brief reads available data
+ *
+ * @param *clt_uid: pointer to the buffer that will store the client unique id
+ * @param *dest: pointer to the buffer that will store the data
+ * @param *size: pointer to variable that will store the data size
+ */
+void snpes_read(void *clt_uid, void *dest, uint16_t *size);
+
 #endif /* __SNPES_H__ */

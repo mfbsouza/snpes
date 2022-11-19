@@ -3,6 +3,7 @@
 #include "snpes_types.h"
 #include "snpes_utils.h"
 #include "CircularQueue.h"
+#include "MemoryManager.h"
 #include <string.h>
 #include <assert.h>
 
@@ -10,6 +11,7 @@
 
 static DeviceCtx_t dev;
 static uint8_t     buf[BUF_SIZE] = {0};
+static uint8_t     heap[HEAP_SIZE] = {0};
 static ClientCtx_t clients[CLT_CNT] = {0};
 
 /* private functions */
@@ -54,11 +56,43 @@ void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 	queue_init(&dev.stream_in);
 	queue_init(&dev.stream_out);
 
+	/* initialize Memory Manager */
+	memmgr_init(&dev.mem, (void *)heap, (uint16_t)HEAP_SIZE);
+
 	/* clear the clients buffer */
 	memset(clients, 0, sizeof(ClientCtx_t)*CLT_CNT);
 
 	/* initialize the LoRa device ID */
 	dev.hw.socket->set_id(dev.network_id);
+}
+
+uint16_t snpes_data_available(void)
+{
+	uint16_t ret = 0;
+	ClientCtx_t *clt = NULL;
+	if ((clt = get_data_avail_client(clients)) != NULL) {
+		ret = clt->data_size;
+	}
+	return ret;
+}
+
+void snpes_read(void *clt_uid, void *dest, uint16_t *size)
+{
+	assert(clt_uid);
+	assert(dest);
+	assert(size);
+	ClientCtx_t *clt = NULL;
+
+	if ((clt = get_data_avail_client(clients)) != NULL) {
+		/* copy the data to the user */
+		memcpy(dest, clt->data, clt->data_size);
+		*size = clt->data_size;
+		*(uint8_t *)clt_uid = clt->unique_id;
+		/* free the memory */
+		memmgr_free(&dev.mem, clt->data);
+		/* send the client back to the idle state */
+		clt->state = IDLE;
+	}
 }
 
 static void stream_handler()
@@ -164,6 +198,7 @@ static void gateway_state_machine()
 				 * handle both cases.
 				 * */
 				if (get_pkt_type(pkt) == ACK) state = RECV_ACK;
+				else if (get_pkt_type(pkt) == DATA && clt->state == WAIT_DATA) state = RECV_DATA;
 				else state = clt->state;
 			}
 			else {
@@ -205,6 +240,8 @@ static void gateway_state_machine()
 			clt->unique_id = pkt->src_uid;
 			clt->timeout_cnt = 0;
 			clt->state = WAIT_ACK;
+			clt->data = NULL;
+			clt->data_size = 0;
 			clt->timer_ref = dev.hw.timer->millis();
 			enqueue_data(&dev, clt->unique_id, pkt->src_nid, 0x00, &new_nid, sizeof(uint8_t));
 		}
@@ -229,12 +266,86 @@ static void gateway_state_machine()
 		clt->state = IDLE;
 		clt->timeout_cnt = 0;
 		clt->timer_ref = 0;
+
 		/* save the last time the gateway talked to this client in seconds */
 		clt->alive_ref = (uint32_t)(dev.hw.timer->millis()/1000);
 		break;
 	case IDLE:
+		/* check if it's a valid transmission start signal */
+		if (get_pkt_type(pkt) == TRANS_START && ((get_pkt_seq_number(pkt)>>2)&3) <= MAX_PKT_CNT) {
+			/* make sure we only allocate memory for this transmission once */
+			// TODO: this ain't probably safe, we are trusting the client to send us a valid retry number
+			if ((get_pkt_seq_number(pkt)&3) == 0) {
+				clt->data = memmgr_alloc(&dev.mem, pkt->data_size);
+			}
+			/* check if there was free memory space to receive the client data */
+			if (clt->data == NULL) {
+				/* there wasn't */
+				enqueue_signal(&dev, FULL, clt->unique_id, clt->network_id);
+			}
+			/* it's all good, tell the client it can start sending data */
+			else {
+				clt->state = WAIT_DATA;
+				clt->timeout_cnt = 0;
+				clt->data_size = 0;
+				clt->pkt_cnt = ((get_pkt_seq_number(pkt)>>2)&3);
+				clt->expected_pkt = 1;
+				clt->timer_ref = dev.hw.timer->millis();
+				enqueue_signal(&dev, TRANS_START, clt->unique_id, clt->network_id);
+			}
+		}
+
+		/* save the last time the gateway talked to this client in seconds */
+		clt->alive_ref = (uint32_t)(dev.hw.timer->millis()/1000);
 		break;
-	default:
+	case WAIT_DATA:
+		if ((dev.hw.timer->millis() - clt->timer_ref) >= TIMEOUT_THLD) {
+			/* if there is no response till now, and we reached a maximum amount of trys */
+			if (++clt->timeout_cnt == MAX_TIMEOUT_CNT) {
+				/* send the client back to the idle state */
+				// TODO: should i deallocate that client?
+				memmgr_free(&dev.mem, clt->data);
+				clt->timeout_cnt = 0;
+				clt->timer_ref = 0;
+				clt->data_size = 0;
+				clt->pkt_cnt = 0;
+				clt->expected_pkt = 0;
+				clt->state = IDLE;
+			}
+			/* else, try again */
+			else {
+				clt->timer_ref = dev.hw.timer->millis();
+				// TODO: send a retry signal with the missing packet
+				enqueue_signal(&dev, TRANS_RETRY, clt->unique_id, clt->network_id);
+			}
+		}
+		break;
+	case RECV_DATA:
+		/* check if the packet we received was the expected */
+		if (get_pkt_seq_number(pkt) == clt->expected_pkt) {
+			/* save the data */
+			memcpy(((uint8_t *)clt->data + clt->data_size), pkt->data, pkt->data_size);
+			clt->data_size += pkt->data_size;
+			/* tell the client we received the data */
+			enqueue_signal(&dev, ACK, clt->unique_id, clt->network_id);
+
+			/* check if that was the last packet */
+			if (++clt->expected_pkt > clt->pkt_cnt) {
+				clt->state = DATA_AVAIL;
+				clt->timeout_cnt = 0;
+				clt->timer_ref = 0;
+			}
+		}
+
+		/* save the last time the gateway talked to this client in seconds */
+		clt->alive_ref = (uint32_t)(dev.hw.timer->millis()/1000);
+		break;
+	case DATA_AVAIL:
+		/** 
+		 * this is a locked state,
+		 * technically the client shouldn't be able to do anything
+		 * util the gateway user reads the availiable data
+		 * */
 		break;
 	}
 }

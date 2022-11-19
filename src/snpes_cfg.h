@@ -5,6 +5,8 @@
 #if defined(SNPES_MILLI)
 /* Packet size in bytes */
 #define PKT_SIZE   128
+/* Fake heap size in bytes */
+#define HEAP_SIZE  512
 /* Packets' Metadata size in bytes */
 #define META_SIZE  6
 /* maxium amount of packets in the the buffer */
@@ -23,6 +25,8 @@
 #else
 /* Packet size in bytes */
 #define PKT_SIZE   64
+/* Fake heap size in bytes */
+#define HEAP_SIZE  256
 /* Packets' Metadata size in bytes */
 #define META_SIZE  6
 /* maxium amount of packets in the the buffer */

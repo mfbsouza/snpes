@@ -104,6 +104,7 @@ CPPUTEST_LIB_DIR = build/debug/lib
 # CPPUTEST_WARNINGFLAGS += -Wno-missing-noreturn
 # endif
 #
+CPPUTEST_WARNINGFLAGS += -Wno-switch-default
 # CPPUTEST_WARNINGFLAGS += -Wall
 # CPPUTEST_WARNINGFLAGS += -Werror
 # CPPUTEST_WARNINGFLAGS += -Wfatal-errors
