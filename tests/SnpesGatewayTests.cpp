@@ -2,7 +2,7 @@
 #include <CppUTestExt/MockSupport.h>
 #include <chrono>
 
-extern "C"{
+extern "C" {
 #include <snpes_gateway.h>
 #include <snpes_types.h>
 #include <snpes_utils.h>
@@ -102,7 +102,7 @@ TEST_GROUP(SnpesGatewayTests)
 TEST(SnpesGatewayTests, Scan)
 {
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &TestTimer);
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
 
 	/* build a fake packet */
 	build_signal(&(recv_buf), SCAN, 0xAA, 0xFF, 0x00, 0x00, 0x0);
@@ -127,7 +127,7 @@ TEST(SnpesGatewayTests, Scan)
 TEST(SnpesGatewayTests, SyncAndAck)
 {
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &TestTimer);
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
 	/* build a fake packet */
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
@@ -191,13 +191,13 @@ TEST(SnpesGatewayTests, SyncAndAck)
 TEST(SnpesGatewayTests, FakeClientAndSyncFull)
 {
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &TestTimer);
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
 	/* fake client packet */
 	build_signal(&(recv_buf), SYNC, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	snpes_compute();
 	/* populate client list */
-	snpes_init(0x55, &TestLora, &TestTimer);
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
 	for (int i = 0; i <= CLT_CNT; i++) {
 		build_signal(&(recv_buf), SYNC, (uint8_t)i, 0xFF, 0x55, 0x00, 0x0);
 		mock().expectOneCall("mock_avail").andReturnValue(1);
@@ -218,7 +218,7 @@ TEST(SnpesGatewayTests, FakeClientAndSyncFull)
 TEST(SnpesGatewayTests, Timeout)
 {
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &TestTimerTimeout);
+	snpes_gw_init(0x55, &TestLora, &TestTimerTimeout);
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	snpes_compute();
@@ -249,7 +249,7 @@ TEST(SnpesGatewayTests, Timeout)
 TEST(SnpesGatewayTests, Alive)
 {
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &MockTimer);
+	snpes_gw_init(0x55, &TestLora, &MockTimer);
 	/* build a fake packet */
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
@@ -306,7 +306,7 @@ TEST(SnpesGatewayTests, Transmission)
 	uint16_t size = 0;
 	uint8_t clt_uid = 0;
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &TestTimer);
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
 	/* build a fake packet */
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
@@ -396,7 +396,7 @@ TEST(SnpesGatewayTests, Transmission)
 TEST(SnpesGatewayTests, DataTimout)
 {
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &MockTimer);
+	snpes_gw_init(0x55, &TestLora, &MockTimer);
 	/* build a fake packet */
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
@@ -456,7 +456,7 @@ TEST(SnpesGatewayTests, DataTimout)
 TEST(SnpesGatewayTests, TransmissionDataFull)
 {
 	Packet_t *response = NULL;
-	snpes_init(0x55, &TestLora, &TestTimer);
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
 	/* build a fake packet */
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */

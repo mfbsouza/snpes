@@ -13,7 +13,7 @@
  * @param *lora: pointer to a LoRa Conn Interface
  * @param *timer: pointer to a Timer Interface
  */
-void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
+void snpes_gw_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
 
 /**
  * @brief calls all the gateway modules
@@ -35,6 +35,15 @@ uint16_t snpes_data_available(void);
  * @param *dest: pointer to the buffer that will store the data
  * @param *size: pointer to variable that will store the data size
  */
-void snpes_read(void *clt_uid, void *dest, uint16_t *size);
+void snpes_read(uint8_t *clt_uid, void *dest, uint16_t *size);
+
+/**
+ * @brief send a given data to a client
+ *
+ * @param clt_uid: the receiver client unique id
+ * @param *src: pointer to the buffer that stores the data to send
+ * @param size: size of the data located at the src buffer
+ */
+//void snpes_write(uint8_t clt_uid, const void *src, uint16_t size);
 
 #endif /* __SNPES_H__ */

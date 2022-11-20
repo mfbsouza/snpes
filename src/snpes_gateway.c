@@ -32,7 +32,7 @@ void snpes_compute(void)
 	}
 }
 
-void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
+void snpes_gw_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 {
 	/* avoid null address */
 	assert(lora);
@@ -76,7 +76,7 @@ uint16_t snpes_data_available(void)
 	return ret;
 }
 
-void snpes_read(void *clt_uid, void *dest, uint16_t *size)
+void snpes_read(uint8_t *clt_uid, void *dest, uint16_t *size)
 {
 	assert(clt_uid);
 	assert(dest);
@@ -87,7 +87,7 @@ void snpes_read(void *clt_uid, void *dest, uint16_t *size)
 		/* copy the data to the user */
 		memcpy(dest, clt->data, clt->data_size);
 		*size = clt->data_size;
-		*(uint8_t *)clt_uid = clt->unique_id;
+		*clt_uid = clt->unique_id;
 		/* free the memory */
 		memmgr_free(&dev.mem, clt->data);
 		/* send the client back to the idle state */

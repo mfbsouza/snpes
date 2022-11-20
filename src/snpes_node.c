@@ -6,8 +6,8 @@
 
 /* private variables */
 
-static uint8_t  unique_id;
-static uint8_t  network_id;
+static uint8_t  unique_id = 0;
+static uint8_t  network_id = 0;
 static HwCtx_t  hw;
 static Packet_t buf;
 
@@ -17,7 +17,7 @@ static SnpesStatus_t wait_signal(PacketType_t signal);
 
 /* functions implementations */
 
-void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
+void snpes_node_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 {
 	/* avoid null pointers */
 	assert(lora);
@@ -71,7 +71,7 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 		timer_ref = hw.timer->millis();
 
 		while ((hw.timer->millis() - timer_ref) <= TIMEOUT_THLD) {
-			/* wait util there is some packet availible */
+			/* wait until there is some packet availible */
 			if (hw.socket->pkt_avail()) {
 				/* read the availible packet */
 				hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
@@ -96,6 +96,71 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 		timeout_cnt++;
 	}
 	return SNPES_ERROR;
+}
+
+SnpesStatus_t snpes_send(uint8_t dest_uid, const void *src, uint8_t size)
+{
+	assert(src);
+	assert(size > 0);
+
+	SnpesStatus_t ret = SNPES_ERROR;
+	uint8_t recv_nid, recv_size;
+	uint8_t timeout_cnt = 0;
+	uint32_t timer_ref = 0;
+	/* check if connected */
+	if (network_id != NODE && network_id != 0x00) {
+		/* ask for permission to send data */
+		while (timeout_cnt < MAX_TIMEOUT_CNT) {
+			/* build a TRANS_START packet and send it */
+			build_signal(&buf, TRANS_START, unique_id, network_id, dest_uid, GATEWAY, ((MAX_PKT_CNT<<2) | (timeout_cnt&3)));
+			buf.data_size = size;
+			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
+			timer_ref = hw.timer->millis();
+			while ((hw.timer->millis() - timer_ref) <= TIMEOUT_THLD) {
+				/* wait until there is some packet availible */
+				if (hw.socket->pkt_avail()) {
+					/* read the availible packet */
+					hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
+					/* if it's the signal we're looking for */
+					if (get_pkt_type(&buf) == TRANS_START) {
+						/* get out of this nested loops */
+						goto SEND_DATA;
+					}
+					else if (get_pkt_type(&buf) == FULL) {
+						return SNPES_ERROR;
+					}
+					/* else, just ignore it */
+				}
+			}
+		timeout_cnt++;
+		}
+	}
+	return ret;
+
+SEND_DATA:
+	if (get_pkt_type(&buf) == TRANS_START) {
+		timeout_cnt = 0;
+		while (timeout_cnt < MAX_TIMEOUT_CNT) {
+			/* build the data packet */
+			build_data(&buf, unique_id, network_id, dest_uid, GATEWAY, MAX_PKT_CNT, src, size);
+			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE+size);
+			timer_ref = hw.timer->millis();
+			while ((hw.timer->millis() - timer_ref) <= TIMEOUT_THLD) {
+				if (hw.socket->pkt_avail()) {
+					hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
+					if (get_pkt_type(&buf) == ACK) {
+						return SNPES_OK;
+					}
+					else if (get_pkt_type(&buf) == TRANS_RETRY) {
+						break;
+					}
+					/* else, just ignore it */
+				}
+			}
+			timeout_cnt++;
+		}
+	}
+	return ret;
 }
 
 static SnpesStatus_t wait_signal(PacketType_t signal)
