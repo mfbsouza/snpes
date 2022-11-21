@@ -1,6 +1,6 @@
 # firmware size experiment
 
-## Arduino Uno: Snpes Node Lib + User code
+## Arduino Uno: Snpes Node Lib + LoRaMESH Driver + User code
 
 	Linking .pio/build/uno/firmware.elf
 	Checking size .pio/build/uno/firmware.elf
@@ -23,7 +23,7 @@
 * RAM: 790 - 9 = 781 bytes, 38.2%
 * Flash: 6090 - 444 = 5646 bytes, 17.5%
 
-## STM32: Snpes Node Lib + User code
+## STM32: Snpes Node Lib + LoRaMESH Driver + User code
 
 	Linking .pio/build/genericSTM32F103C8/firmware.elf
 	Checking size .pio/build/genericSTM32F103C8/firmware.elf
@@ -46,7 +46,7 @@
 * RAM: 1540 - 764 = 776 bytes, 3.8%
 * Flash: 18396 - 6916 = 11480 bytes, 17.5%
 
-## ESP32: Snpes Gateway Lib + User code
+## ESP32: Snpes Gateway Lib + LoRaMESH Driver + User code
 
 	Linking .pio/build/esp32doit-devkit-v1/firmware.elf
 	Retrieving maximum program size .pio/build/esp32doit-devkit-v1/firmware.elf
