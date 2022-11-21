@@ -1,4 +1,4 @@
-# firmware size experiment
+# firmware footprint experiment
 
 ## Arduino Uno: Snpes Node Lib + LoRaMESH Driver + User code
 
