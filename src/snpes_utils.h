@@ -38,8 +38,9 @@ void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid, uint8_t dest_ui
  * @param signal: signal flag define at snpes_types
  * @param dest_uid: UID of the destination node
  * @param dest_nid: NID of the destination node
+ * @param seq: sequence number of the signal
  */
-void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uint8_t dest_nid);
+void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq);
 
 /**
  * @brief enqueue a Data Packet to the stream out of a given protocol device

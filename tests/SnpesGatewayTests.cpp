@@ -108,6 +108,7 @@ TEST(SnpesGatewayTests, Scan)
 	build_signal(&(recv_buf), SCAN, 0xAA, 0xFF, 0x00, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -132,6 +133,7 @@ TEST(SnpesGatewayTests, SyncAndAck)
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -142,6 +144,7 @@ TEST(SnpesGatewayTests, SyncAndAck)
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x1);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -163,6 +166,7 @@ TEST(SnpesGatewayTests, SyncAndAck)
 	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 
@@ -170,6 +174,7 @@ TEST(SnpesGatewayTests, SyncAndAck)
 	build_signal(&(recv_buf), SYNC, 0xBB, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -195,12 +200,14 @@ TEST(SnpesGatewayTests, FakeClientAndSyncFull)
 	/* fake client packet */
 	build_signal(&(recv_buf), SYNC, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	snpes_compute();
 	/* populate client list */
 	snpes_gw_init(0x55, &TestLora, &TestTimer);
 	for (int i = 0; i <= CLT_CNT; i++) {
 		build_signal(&(recv_buf), SYNC, (uint8_t)i, 0xFF, 0x55, 0x00, 0x0);
 		mock().expectOneCall("mock_avail").andReturnValue(1);
+		mock().expectOneCall("mock_avail").andReturnValue(0);
 		snpes_compute();
 	}
 	mock().expectOneCall("mock_avail").andReturnValue(0);
@@ -221,6 +228,7 @@ TEST(SnpesGatewayTests, Timeout)
 	snpes_gw_init(0x55, &TestLora, &TestTimerTimeout);
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	snpes_compute();
 	mock().expectOneCall("mock_avail").andReturnValue(0);
 	snpes_compute();
@@ -254,6 +262,7 @@ TEST(SnpesGatewayTests, Alive)
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	mock().expectOneCall("mock_timer").andReturnValue(1);
 	/* let the gateway compute */
 	snpes_compute();
@@ -266,10 +275,15 @@ TEST(SnpesGatewayTests, Alive)
 	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	mock().expectNCalls(2, "mock_timer").andReturnValue(1000);
 	/* let the gateway compute */
 	snpes_compute();
 	/* now that we are connect, lest fake that a long time has passed */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(((ALIVE_THLD*1000)+1000));
+	snpes_compute();
+	/* compute */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
 	mock().expectNCalls(2, "mock_timer").andReturnValue(((ALIVE_THLD*1000)+1000));
 	snpes_compute();
@@ -284,6 +298,10 @@ TEST(SnpesGatewayTests, Alive)
 	/* force a retry */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
 	mock().expectNCalls(3, "mock_timer").andReturnValue(((ALIVE_THLD*1000)+1000)+TIMEOUT_THLD);
+	snpes_compute();
+	/* compute */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(((ALIVE_THLD*1000)+1000)+TIMEOUT_THLD);
 	snpes_compute();
 	response = (Packet_t *) send_buf.data;
 	CHECK_EQUAL(0x55, response->src_uid);
@@ -311,6 +329,7 @@ TEST(SnpesGatewayTests, Transmission)
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -321,6 +340,7 @@ TEST(SnpesGatewayTests, Transmission)
 	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* client 0xAA is now connected */
@@ -331,6 +351,7 @@ TEST(SnpesGatewayTests, Transmission)
 	recv_buf.data_size = 2;
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -343,6 +364,7 @@ TEST(SnpesGatewayTests, Transmission)
 	recv_buf.data_size = 2;
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -363,6 +385,7 @@ TEST(SnpesGatewayTests, Transmission)
 	build_data(&recv_buf, 0xAA, 0x01, 0x55, 0x00, 0x1, &data, sizeof(uint16_t));
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -382,6 +405,7 @@ TEST(SnpesGatewayTests, Transmission)
 	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4);
 	recv_buf.data_size = 2;
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	snpes_compute();
 
 	/* try to read the data */
@@ -401,6 +425,7 @@ TEST(SnpesGatewayTests, DataTimout)
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	mock().expectOneCall("mock_timer").andReturnValue(1);
 	/* let the gateway compute */
 	snpes_compute();
@@ -413,6 +438,7 @@ TEST(SnpesGatewayTests, DataTimout)
 	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
 	/* let the gateway compute */
 	snpes_compute();
@@ -423,6 +449,7 @@ TEST(SnpesGatewayTests, DataTimout)
 	recv_buf.data_size = 2;
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	mock().expectNCalls(3, "mock_timer").andReturnValue(1);
 	/* let the gateway compute */
 	snpes_compute();
@@ -461,6 +488,7 @@ TEST(SnpesGatewayTests, TransmissionDataFull)
 	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -471,6 +499,7 @@ TEST(SnpesGatewayTests, TransmissionDataFull)
 	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* client 0xAA is now connected */
@@ -479,6 +508,7 @@ TEST(SnpesGatewayTests, TransmissionDataFull)
 	build_signal(&(recv_buf), SYNC, 0xBB, 0xFF, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -489,6 +519,7 @@ TEST(SnpesGatewayTests, TransmissionDataFull)
 	build_signal(&(recv_buf), ACK, 0xBB, 0x02, 0x55, 0x00, 0x0);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* client 0xBB is now connected */
@@ -500,6 +531,7 @@ TEST(SnpesGatewayTests, TransmissionDataFull)
 	recv_buf.data_size = 249;
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */
@@ -514,6 +546,7 @@ TEST(SnpesGatewayTests, TransmissionDataFull)
 	recv_buf.data_size = 2;
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
 	/* let the gateway compute */
 	snpes_compute();
 	/* say that there is no packet availible */

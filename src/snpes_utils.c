@@ -28,14 +28,14 @@ void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid, uint8_t dest_ui
 	memcpy(pkt->data, src, size);
 }
 
-void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uint8_t dest_nid)
+void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid, uint8_t dest_nid, uint8_t seq)
 {
 	assert(dev);
 	Packet_t *dest = NULL;
 
 	if (!queue_full(&dev->stream_out)) {
 		dest = (Packet_t *) queue_alloc(&dev->stream_out);
-		build_signal(dest, signal, dev->unique_id, dev->network_id, dest_uid, dest_nid, 0x0);
+		build_signal(dest, signal, dev->unique_id, dev->network_id, dest_uid, dest_nid, seq);
 	}
 }
 

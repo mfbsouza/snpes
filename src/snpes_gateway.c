@@ -102,14 +102,13 @@ static void stream_handler()
 	Packet_t *src = NULL;
 
 	/* if there is some packet availiable, save it */
-	// TODO: this maybe should be a "while" instead of a "if"
-	if (dev.hw.socket->pkt_avail() && !queue_full(&dev.stream_in)) {
+	while (dev.hw.socket->pkt_avail() && !queue_full(&dev.stream_in)) {
 		dest = queue_alloc(&dev.stream_in);
 		dev.hw.socket->pkt_recv(&nid, (uint8_t *)dest, &size);
 	}
 
 	/* if there is some packet to send, send it */
-	if (!queue_empty(&dev.stream_out)) {
+	while (!queue_empty(&dev.stream_out)) {
 		src = (Packet_t *) queue_pop(&dev.stream_out);
 		dev.hw.socket->pkt_send(src->dest_nid, (uint8_t *)src, (src->data_size + META_SIZE));
 	}
@@ -118,7 +117,6 @@ static void stream_handler()
 static void alive_checker()
 {
 	ClientCtx_t *clt = NULL;
-	static uint8_t signal_pkt[META_SIZE] = {0};
 
 	/* look for a idle client */
 	for (int ii = 0; ii < CLT_CNT; ii++) {
@@ -149,11 +147,9 @@ static void alive_checker()
 	}
 
 	/* send a ALIVE signal */
-	// TODO: maybe this module shouldn't send the Packet directly using the hw, instead it should enqueue the signal in the stream output
 	if (clt != NULL) {
-		build_signal((Packet_t *)signal_pkt, ALIVE, dev.unique_id, dev.network_id, clt->unique_id, clt->network_id, clt->timeout_cnt);
+		enqueue_signal(&dev, ALIVE, clt->unique_id, clt->network_id, clt->timeout_cnt);
 		clt->timer_ref = dev.hw.timer->millis();
-		dev.hw.socket->pkt_send(((Packet_t *)signal_pkt)->dest_nid, signal_pkt, META_SIZE);
 	}
 }
 
@@ -220,7 +216,7 @@ static void gateway_state_machine()
 
 	switch (state) {
 	case SEND_INFO:
-		enqueue_signal(&dev, INFO, pkt->src_uid, pkt->src_nid);
+		enqueue_signal(&dev, INFO, pkt->src_uid, pkt->src_nid, 0x0);
 		break;
 	case RECV_SYNC:
 		/* check if the SYNC request is the first or a retry */
@@ -232,7 +228,7 @@ static void gateway_state_machine()
 		}
 		/* if there isn't free network IDs */
 		if (new_nid == 0) {
-			enqueue_signal(&dev, FULL, pkt->src_uid, pkt->src_nid);
+			enqueue_signal(&dev, FULL, pkt->src_uid, pkt->src_nid, 0x0);
 		}
 		/* else, setup to waiting ack */
 		else {
@@ -281,7 +277,7 @@ static void gateway_state_machine()
 			/* check if there was free memory space to receive the client data */
 			if (clt->data == NULL) {
 				/* there wasn't */
-				enqueue_signal(&dev, FULL, clt->unique_id, clt->network_id);
+				enqueue_signal(&dev, FULL, clt->unique_id, clt->network_id, 0x0);
 			}
 			/* it's all good, tell the client it can start sending data */
 			else {
@@ -291,7 +287,7 @@ static void gateway_state_machine()
 				clt->pkt_cnt = ((get_pkt_seq_number(pkt)>>2)&3);
 				clt->expected_pkt = 1;
 				clt->timer_ref = dev.hw.timer->millis();
-				enqueue_signal(&dev, TRANS_START, clt->unique_id, clt->network_id);
+				enqueue_signal(&dev, TRANS_START, clt->unique_id, clt->network_id, 0x0);
 			}
 		}
 
@@ -316,7 +312,7 @@ static void gateway_state_machine()
 			else {
 				clt->timer_ref = dev.hw.timer->millis();
 				// TODO: send a retry signal with the missing packet
-				enqueue_signal(&dev, TRANS_RETRY, clt->unique_id, clt->network_id);
+				enqueue_signal(&dev, TRANS_RETRY, clt->unique_id, clt->network_id, 0x0);
 			}
 		}
 		break;
@@ -327,7 +323,7 @@ static void gateway_state_machine()
 			memcpy(((uint8_t *)clt->data + clt->data_size), pkt->data, pkt->data_size);
 			clt->data_size += pkt->data_size;
 			/* tell the client we received the data */
-			enqueue_signal(&dev, ACK, clt->unique_id, clt->network_id);
+			enqueue_signal(&dev, ACK, clt->unique_id, clt->network_id, 0x0);
 
 			/* check if that was the last packet */
 			if (++clt->expected_pkt > clt->pkt_cnt) {

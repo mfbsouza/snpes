@@ -43,7 +43,7 @@
 #endif /* SNPES_ CONFIG */
 
 #define MAX_TIMEOUT_CNT 2
-#define TIMEOUT_THLD 5000 // 5 seconds in milliseconds
-#define ALIVE_THLD   5*60 // 5 minutes in seconds
+#define TIMEOUT_THLD 10000 // 10 seconds in milliseconds
+#define ALIVE_THLD    5*60 // 5 minutes in seconds
 
 #endif /* __SNPES_CFG_H__ */
