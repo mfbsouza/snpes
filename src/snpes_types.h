@@ -22,7 +22,7 @@ typedef enum {
 	WAIT_DATA,
 	RECV_DATA,
 	DATA_AVAIL
-} GwStates_t;
+} States_t;
 
 typedef enum {
 	NOT_CONNETED = 0x00,
@@ -47,7 +47,7 @@ typedef struct {
 	uint8_t unique_id;
 	uint8_t network_id;
 	/* connection state */
-	GwStates_t state;
+	States_t state;
 	/* flags */
 	ConnState_t connected;
 	/* time references */

@@ -155,7 +155,7 @@ static void alive_checker()
 
 static void gateway_state_machine()
 {
-	GwStates_t state; // TODO: maybe change the type to CltStates
+	States_t state;
 	Packet_t *pkt = NULL;
 	ClientCtx_t *clt = NULL;
 	uint8_t new_nid;
@@ -311,8 +311,7 @@ static void gateway_state_machine()
 			/* else, try again */
 			else {
 				clt->timer_ref = dev.hw.timer->millis();
-				// TODO: send a retry signal with the missing packet
-				enqueue_signal(&dev, TRANS_RETRY, clt->unique_id, clt->network_id, 0x0);
+				enqueue_signal(&dev, TRANS_RETRY, clt->unique_id, clt->network_id, clt->expected_pkt);
 			}
 		}
 		break;

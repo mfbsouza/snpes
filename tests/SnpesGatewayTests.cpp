@@ -417,7 +417,7 @@ TEST(SnpesGatewayTests, Transmission)
 	CHECK_EQUAL(2, size);
 }
 
-TEST(SnpesGatewayTests, DataTimout)
+TEST(SnpesGatewayTests, DataTimeout)
 {
 	Packet_t *response = NULL;
 	snpes_gw_init(0x55, &TestLora, &MockTimer);
@@ -469,7 +469,7 @@ TEST(SnpesGatewayTests, DataTimout)
 	CHECK_EQUAL(0xAA, response->dest_uid);
 	CHECK_EQUAL(0x01, response->dest_nid);
 	CHECK_EQUAL(TRANS_RETRY, ((response->flgs_seq)>>4)&0x0F);
-	CHECK_EQUAL(0, response->flgs_seq&0x0F);
+	CHECK_EQUAL(1, response->flgs_seq&0x0F);
 	CHECK_EQUAL(0, response->data_size);
 
 	/* force a retry, again */
