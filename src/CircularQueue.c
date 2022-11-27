@@ -2,9 +2,16 @@
 #include <string.h>
 #include <assert.h>
 
-void queue_init(Queue_t *queue_ctx)
+void queue_init(Queue_t *queue_ctx, void *start, uint8_t elmt_size, uint8_t elmt_cnt)
 {
 	assert(queue_ctx);
+	assert(start);
+	assert(elmt_size > 0);
+	assert(elmt_cnt > 0);
+
+	queue_ctx->start_addr = start;
+	queue_ctx->elmt_size = elmt_size;
+	queue_ctx->elmt_cnt = elmt_cnt;
 	queue_ctx->head = -1;
 	queue_ctx->tail = -1;
 }

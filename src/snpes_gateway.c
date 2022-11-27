@@ -44,17 +44,9 @@ void snpes_gw_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer)
 	dev.hw.socket = lora;
 	dev.hw.timer = timer;
 
-	/* protocol data streams config */
-	dev.stream_in.start_addr = (void *)buf;
-	dev.stream_in.elmt_size = (uint8_t)PKT_SIZE;
-	dev.stream_in.elmt_cnt = (uint8_t)S_IN_CNT;
-	dev.stream_out.start_addr = (void *)(buf+(PKT_SIZE*S_IN_CNT));
-	dev.stream_out.elmt_size = (uint8_t)PKT_SIZE;
-	dev.stream_out.elmt_cnt = (uint8_t)S_OUT_CNT;
-
 	/* initialize data streams */
-	queue_init(&dev.stream_in);
-	queue_init(&dev.stream_out);
+	queue_init(&dev.stream_in, buf, PKT_SIZE, S_IN_CNT);
+	queue_init(&dev.stream_out, (buf+(PKT_SIZE*S_IN_CNT)), PKT_SIZE, S_OUT_CNT);
 
 	/* initialize Memory Manager */
 	memmgr_init(&dev.mem, (void *)heap, (uint16_t)HEAP_SIZE);

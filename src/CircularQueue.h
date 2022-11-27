@@ -24,8 +24,11 @@ typedef struct {
  * by a given Queue Context Struct
  *
  * @param *queue_ctx: The Queue Context Struct
+ * @param *start: The start address of a continuous memory location
+ * @param elmt_size: The size in bytes of a element in the queue
+ * @param elmt_cnt: How many elements the queue can hold
  */
-void queue_init(Queue_t *queue_ctx);
+void queue_init(Queue_t *queue_ctx, void *start, uint8_t elmt_size, uint8_t elmt_cnt);
 
 /**
  * @brief request allocation for one element in the Queue
