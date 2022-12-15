@@ -17,11 +17,11 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install CppUtest dependencies
         run: |
-          sudo apt-get update && \
+          sudo apt-get update
           sudo apt-get install -y -q --no-install-recommends file git gcc g++ make automake autoconf libtool
       - name: Clone and Build CppUtest
         run: |
-          git clone https://github.com/cpputest/cpputest.git \
+          git clone https://github.com/cpputest/cpputest.git
           cd cpputest && autoreconf . -i && ./configure && make tdd -j$(nproc) && export CPPUTEST_HOME=$PWD && cd ..
       - name: Build and Run Unit Tests
         run: |
