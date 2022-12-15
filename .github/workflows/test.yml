@@ -22,7 +22,9 @@ jobs:
       - name: Clone and Build CppUtest
         run: |
           git clone https://github.com/cpputest/cpputest.git
-          cd cpputest && autoreconf . -i && ./configure && make tdd -j$(nproc) && export CPPUTEST_HOME=$PWD && cd ..
+          cd cpputest && autoreconf . -i && ./configure && make tdd -j$(nproc)
+          echo "CPPUTEST_HOME=$PWD" >> $GITHUB_ENV
+          cd ..
       - name: Build and Run Unit Tests
         run: |
           make clean
