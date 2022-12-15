@@ -14,12 +14,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: Install CppUtest dependencies
-        run: sudo apt-get update && sudo apt-get install -y -q --no-install-recommends file git gcc g++ make automake autoconf libtool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y -q --no-install-recommends file git gcc g++ make automake autoconf libtool
       - name: Clone and Build CppUtest
-        run: git clone https://github.com/cpputest/cpputest.git
-        run: cd cpputest && autoreconf . -i && ./configure && make tdd -j$(nproc) && export CPPUTEST_HOME=$PWD
+        run: |
+          git clone https://github.com/cpputest/cpputest.git
+          cd cpputest && autoreconf . -i && ./configure && make tdd -j$(nproc)
+          echo "CPPUTEST_HOME=$PWD" >> $GITHUB_ENV
+          cd ..
       - name: Build and Run Unit Tests
-      - uses: actions/checkout@v2
-        run: make clean
-        run: make tests
+        run: |
+          make clean
+          make tests
