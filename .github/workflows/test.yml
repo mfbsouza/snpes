@@ -13,19 +13,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: hub.docker.com/r/mfbsouza/cpputest-docker
+      options: --user root
     steps:
-      - uses: actions/checkout@v3
-      - name: Install CppUtest dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y -q --no-install-recommends file git gcc g++ make automake autoconf libtool
-      - name: Clone and Build CppUtest
-        run: |
-          git clone https://github.com/cpputest/cpputest.git
-          cd cpputest && autoreconf . -i && ./configure && make tdd -j$(nproc)
-          echo "CPPUTEST_HOME=$PWD" >> $GITHUB_ENV
-          cd ..
       - name: Build and Run Unit Tests
+        uses: actions/checkout@v3
         run: |
           make clean
           make tests
