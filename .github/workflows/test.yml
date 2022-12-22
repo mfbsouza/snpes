@@ -17,8 +17,8 @@ jobs:
       image: hub.docker.com/r/mfbsouza/cpputest-docker
       options: --user root
     steps:
+      - uses: actions/checkout@v3
       - name: Build and Run Unit Tests
-        uses: actions/checkout@v3
         run: |
           make clean
           make tests
