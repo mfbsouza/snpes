@@ -17,6 +17,9 @@ jobs:
       image: mfbsouza/cpputest-docker
       options: --user root
     steps:
+      - name: Disable git SSL verification
+        run: |
+          git config --global http.sslverify false
       - uses: actions/checkout@v3
       - name: Build and Run Unit Tests
         run: |
