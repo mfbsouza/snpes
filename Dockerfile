@@ -18,6 +18,7 @@ WORKDIR /repo/cpputest
 RUN autoreconf . -i && ./configure && make tdd -j$(nproc)
 ENV CPPUTEST_HOME=/repo/cpputest
 
-# run
+# run tests
 WORKDIR /app
-CMD echo "hello from docker image!"
+COPY . ./
+CMD make tests

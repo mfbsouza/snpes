@@ -107,6 +107,14 @@ else
 	@$(OD) -h -S $< > $@
 endif
 
+# target for building the docker image for testing
+docker_image:
+	docker build . -t snpes-tests
+
+# target for running the tests in the a docker image
+docker_tests: docker_image
+	docker run -it snpes-tests
+
 # target for unit tests
 tests:
 	make -f MakeTests.mk all
