@@ -2,14 +2,22 @@
 #include <string.h>
 #include <assert.h>
 
-void queue_init(Queue_t *queue_ctx)
+void queue_init(Queue_t *queue_ctx, void *start, uint8_t elmt_size,
+		uint8_t elmt_cnt)
 {
 	assert(queue_ctx);
+	assert(start);
+	assert(elmt_size > 0);
+	assert(elmt_cnt > 0);
+
+	queue_ctx->start_addr = start;
+	queue_ctx->elmt_size = elmt_size;
+	queue_ctx->elmt_cnt = elmt_cnt;
 	queue_ctx->head = -1;
 	queue_ctx->tail = -1;
 }
 
-void* queue_alloc(Queue_t *queue_ctx)
+void *queue_alloc(Queue_t *queue_ctx)
 {
 	assert(queue_ctx);
 	void *dest_addr = NULL;
@@ -22,10 +30,10 @@ void* queue_alloc(Queue_t *queue_ctx)
 	/* if queue is full */
 	else if (queue_full(queue_ctx)) {
 		dest_addr = NULL;
-	}
-	else {
-		queue_ctx->head = (queue_ctx->head+1) % queue_ctx->elmt_cnt;
-		dest_addr = (void *)((uint8_t *)queue_ctx->start_addr + queue_ctx->head*queue_ctx->elmt_size);
+	} else {
+		queue_ctx->head = (queue_ctx->head + 1) % queue_ctx->elmt_cnt;
+		dest_addr = (void *)((uint8_t *)queue_ctx->start_addr +
+				     queue_ctx->head * queue_ctx->elmt_size);
 	}
 	return dest_addr;
 }
@@ -46,7 +54,7 @@ int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr)
 	return ret;
 }
 
-void* queue_pop(Queue_t *queue_ctx)
+void *queue_pop(Queue_t *queue_ctx)
 {
 	assert(queue_ctx);
 	void *ret = NULL;
@@ -57,17 +65,18 @@ void* queue_pop(Queue_t *queue_ctx)
 	}
 	/* if is the last element */
 	else if (queue_ctx->tail == queue_ctx->head) {
-		ret = (void *)((uint8_t *)queue_ctx->start_addr + queue_ctx->tail*queue_ctx->elmt_size);
+		ret = (void *)((uint8_t *)queue_ctx->start_addr +
+			       queue_ctx->tail * queue_ctx->elmt_size);
 		queue_ctx->tail = queue_ctx->head = -1;
-	}
-	else {
-		ret = (void *)((uint8_t *)queue_ctx->start_addr + queue_ctx->tail*queue_ctx->elmt_size);
-		queue_ctx->tail = (queue_ctx->tail+1) % queue_ctx->elmt_cnt;
+	} else {
+		ret = (void *)((uint8_t *)queue_ctx->start_addr +
+			       queue_ctx->tail * queue_ctx->elmt_size);
+		queue_ctx->tail = (queue_ctx->tail + 1) % queue_ctx->elmt_cnt;
 	}
 	return ret;
 }
 
-void* queue_peek(Queue_t *queue_ctx)
+void *queue_peek(Queue_t *queue_ctx)
 {
 	assert(queue_ctx);
 	void *ret = NULL;
@@ -75,9 +84,9 @@ void* queue_peek(Queue_t *queue_ctx)
 	/* if queue is empty */
 	if (queue_empty(queue_ctx)) {
 		ret = NULL;
-	}
-	else {
-		ret = (void *)((uint8_t *)queue_ctx->start_addr + queue_ctx->tail*queue_ctx->elmt_size);
+	} else {
+		ret = (void *)((uint8_t *)queue_ctx->start_addr +
+			       queue_ctx->tail * queue_ctx->elmt_size);
 	}
 	return ret;
 }
@@ -96,7 +105,7 @@ uint8_t queue_full(Queue_t *queue_ctx)
 {
 	assert(queue_ctx);
 	uint8_t ret = 0;
-	if (((queue_ctx->head+1) % queue_ctx->elmt_cnt) == queue_ctx->tail) {
+	if (((queue_ctx->head + 1) % queue_ctx->elmt_cnt) == queue_ctx->tail) {
 		ret = 1;
 	}
 	return ret;
@@ -109,12 +118,11 @@ uint8_t queue_remaining(Queue_t *queue_ctx)
 
 	if (queue_empty(queue_ctx)) {
 		ret = queue_ctx->elmt_cnt;
-	}
-	else if (queue_full(queue_ctx)) {
+	} else if (queue_full(queue_ctx)) {
 		ret = 0;
-	}
-	else {
-		while (((interator+1) % queue_ctx->elmt_cnt) != queue_ctx->tail) {
+	} else {
+		while (((interator + 1) % queue_ctx->elmt_cnt) !=
+		       queue_ctx->tail) {
 			ret++;
 			interator++;
 		}

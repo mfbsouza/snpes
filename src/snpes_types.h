@@ -8,10 +8,7 @@
 #include "ConnInterface.h"
 #include "TimerInterface.h"
 
-typedef enum {
-	GATEWAY = 0x00,
-	NODE = 0xFF
-} DeviceType_t;
+typedef enum { GATEWAY = 0x00, NODE = 0xFF } DeviceType_t;
 
 typedef enum {
 	SEND_INFO = 0x00,
@@ -22,13 +19,9 @@ typedef enum {
 	WAIT_DATA,
 	RECV_DATA,
 	DATA_AVAIL
-} GwStates_t;
+} States_t;
 
-typedef enum {
-	NOT_CONNETED = 0x00,
-	CONNECTED,
-	CONNECTING
-} ConnState_t;
+typedef enum { NOT_CONNETED = 0x00, CONNECTED, CONNECTING } ConnState_t;
 
 typedef enum {
 	SCAN = 0x00,
@@ -47,7 +40,7 @@ typedef struct {
 	uint8_t unique_id;
 	uint8_t network_id;
 	/* connection state */
-	GwStates_t state;
+	States_t state;
 	/* flags */
 	ConnState_t connected;
 	/* time references */
@@ -82,7 +75,7 @@ typedef struct {
 	uint8_t dest_nid;
 	uint8_t flgs_seq;
 	uint8_t data_size;
-	uint8_t data[PKT_SIZE-META_SIZE];
+	uint8_t data[PKT_SIZE - META_SIZE];
 } Packet_t;
 
 #endif /* __SNPES_TYPES_H__ */

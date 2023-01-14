@@ -6,10 +6,7 @@
 #include "ConnInterface.h"
 #include "TimerInterface.h"
 
-typedef enum {
-	SNPES_OK,
-	SNPES_ERROR
-} SnpesStatus_t;
+typedef enum { SNPES_OK, SNPES_ERROR } SnpesStatus_t;
 
 /**
  * @brief initializes the snpes protocol as a node device
@@ -18,7 +15,7 @@ typedef enum {
  * @param *lora: pointer to a LoRa Conn Interface
  * @param *timer: pointer to a Timer Interface
  */
-void snpes_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
+void snpes_node_init(uint8_t uid, LoraItf_t *lora, TimerItf_t *timer);
 
 /**
  * @brief scans for a gateway in the area
@@ -35,6 +32,16 @@ SnpesStatus_t snpes_scan(uint8_t *gateway_uid);
  * @retval: SNPES_OK or SNPES_ERROR
  */
 SnpesStatus_t snpes_connect(uint8_t gateway_uid);
+
+/**
+ * @brief connect to a gateway by a given UID
+ *
+ * @param dest_uid: unique id of the receiver node
+ * @param *src: pointer to the buffer holding the data to send
+ * @param size: how many bytes inside the src buffer to send
+ * @retval: SNPES_OK or SNPES_ERROR
+ */
+SnpesStatus_t snpes_send(uint8_t dest_uid, const void *src, uint8_t size);
 
 /**
  * @brief calls all the gateway modules

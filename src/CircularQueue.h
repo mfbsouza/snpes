@@ -24,8 +24,12 @@ typedef struct {
  * by a given Queue Context Struct
  *
  * @param *queue_ctx: The Queue Context Struct
+ * @param *start: The start address of a continuous memory location
+ * @param elmt_size: The size in bytes of a element in the queue
+ * @param elmt_cnt: How many elements the queue can hold
  */
-void queue_init(Queue_t *queue_ctx);
+void queue_init(Queue_t *queue_ctx, void *start, uint8_t elmt_size,
+		uint8_t elmt_cnt);
 
 /**
  * @brief request allocation for one element in the Queue
@@ -34,13 +38,13 @@ void queue_init(Queue_t *queue_ctx);
  *
  * @retval the start address allocated for the element
  */
-void* queue_alloc(Queue_t *queue_ctx);
+void *queue_alloc(Queue_t *queue_ctx);
 
 /**
  * @brief Copies a given element into the Queue
  *
  * @param *queue_ctx: The Queue Context Struct
- * @param elmt_addr: The start address of the element to insert in the Queue
+ * @param elmt_addr: The start address of the element to insert in the Queue 
  *
  * @retval error code
  */
@@ -52,7 +56,7 @@ int8_t queue_push(Queue_t *queue_ctx, void *elmt_addr);
  *
  * @retval The element Address or NULL if no element to read
  */
-void* queue_pop(Queue_t *queue_ctx);
+void *queue_pop(Queue_t *queue_ctx);
 
 /**
  * @brief Gets the address of the next element to read from the Queue
@@ -60,7 +64,7 @@ void* queue_pop(Queue_t *queue_ctx);
  *
  * @retval The element Address or NULL if no element to read
  */
-void* queue_peek(Queue_t *queue_ctx);
+void *queue_peek(Queue_t *queue_ctx);
 
 /**
  * @brief Checks if a Queue is empty
