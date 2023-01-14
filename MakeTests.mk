@@ -1,5 +1,5 @@
 # Makefile by J. W. Grenning
-# at https://github.com/jwgrenning/cpputest-starter-project/blob/master/makefile
+# https://github.com/jwgrenning/cpputest-starter-project/blob/master/makefile
 
 # Modified by mfbsouza.it@gmail.com 
 

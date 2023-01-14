@@ -1,7 +1,7 @@
 #include <CppUTest/TestHarness.h>
 #include <cstdint>
 
-extern "C"{
+extern "C" {
 #include <snpes_utils.h>
 #include <snpes_cfg.h>
 #include <snpes_types.h>
@@ -10,11 +10,8 @@ extern "C"{
 TEST_GROUP(SnpesUtilsTests)
 {
 	ClientCtx_t test_clients[CLT_CNT];
-	uint8_t     stream_buf[BUF_SIZE];
-	DeviceCtx_t test_dev {
-		0x13,
-		0x45
-	};
+	uint8_t stream_buf[BUF_SIZE];
+	DeviceCtx_t test_dev{ 0x13, 0x45 };
 };
 
 TEST(SnpesUtilsTests, GetSeqNumber)
@@ -69,7 +66,7 @@ TEST(SnpesUtilsTests, EnqueueSignal)
 	CHECK_EQUAL(0x45, ((Packet_t *)stream_buf)->src_nid);
 	CHECK_EQUAL(0x14, ((Packet_t *)stream_buf)->dest_uid);
 	CHECK_EQUAL(0x16, ((Packet_t *)stream_buf)->dest_nid);
-	CHECK_EQUAL(SYNC, (((Packet_t *)stream_buf)->flgs_seq>>4)&0x0F);
+	CHECK_EQUAL(SYNC, (((Packet_t *)stream_buf)->flgs_seq >> 4) & 0x0F);
 	CHECK_EQUAL(0, ((Packet_t *)stream_buf)->data_size);
 }
 
@@ -82,7 +79,7 @@ TEST(SnpesUtilsTests, EnqueueData)
 	CHECK_EQUAL(0x45, ((Packet_t *)stream_buf)->src_nid);
 	CHECK_EQUAL(0x14, ((Packet_t *)stream_buf)->dest_uid);
 	CHECK_EQUAL(0x16, ((Packet_t *)stream_buf)->dest_nid);
-	CHECK_EQUAL(DATA, (((Packet_t *)stream_buf)->flgs_seq>>4)&0x0F);
+	CHECK_EQUAL(DATA, (((Packet_t *)stream_buf)->flgs_seq >> 4) & 0x0F);
 	CHECK_EQUAL(sizeof(int), ((Packet_t *)stream_buf)->data_size);
 	CHECK_EQUAL(13, *(int *)(((Packet_t *)stream_buf)->data));
 }

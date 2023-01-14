@@ -6,9 +6,9 @@
 
 /* private variables */
 
-static uint8_t  unique_id = 0;
-static uint8_t  network_id = 0;
-static HwCtx_t  hw;
+static uint8_t unique_id = 0;
+static uint8_t network_id = 0;
+static HwCtx_t hw;
 static Packet_t buf;
 
 /* private functions */
@@ -38,11 +38,13 @@ SnpesStatus_t snpes_scan(uint8_t *gateway_uid)
 	uint8_t timeout_cnt = 0;
 
 	/* check if the protocol was initialized */
-	if (hw.socket == NULL) return SNPES_ERROR;
+	if (hw.socket == NULL)
+		return SNPES_ERROR;
 
 	while (timeout_cnt < MAX_TIMEOUT_CNT) {
 		/* build a SCAN packet and send it */
-		build_signal(&buf, SCAN, unique_id, network_id, 0x00, GATEWAY, timeout_cnt);
+		build_signal(&buf, SCAN, unique_id, network_id, 0x00, GATEWAY,
+			     timeout_cnt);
 		hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
 		/* wait for a gateway response */
 		if (wait_signal(INFO) == SNPES_OK) {
@@ -62,11 +64,13 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 	uint32_t timer_ref;
 
 	/* check if the protocol was initialized */
-	if (hw.socket == NULL) return SNPES_ERROR;
+	if (hw.socket == NULL)
+		return SNPES_ERROR;
 
 	while (timeout_cnt < MAX_TIMEOUT_CNT) {
 		/* build a SYNC packet and send it */
-		build_signal(&buf, SYNC, unique_id, network_id, gateway_uid, GATEWAY, timeout_cnt);
+		build_signal(&buf, SYNC, unique_id, network_id, gateway_uid,
+			     GATEWAY, timeout_cnt);
 		hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
 		timer_ref = hw.timer->millis();
 
@@ -74,7 +78,8 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 			/* wait until there is some packet availible */
 			if (hw.socket->pkt_avail()) {
 				/* read the availible packet */
-				hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
+				hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf,
+						    &recv_size);
 				/* if it's the signal we're looking for */
 				if (get_pkt_type(&buf) == DATA) {
 					/* save the new network id */
@@ -82,12 +87,15 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 					/* update the LoRa ID */
 					hw.socket->set_id(network_id);
 					/* send ACK to the gateway */
-					build_signal(&buf, ACK, unique_id, network_id, gateway_uid, buf.src_nid, 0x0);
-					hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
+					build_signal(&buf, ACK, unique_id,
+						     network_id, gateway_uid,
+						     buf.src_nid, 0x0);
+					hw.socket->pkt_send(buf.dest_nid,
+							    (uint8_t *)&buf,
+							    META_SIZE);
 					/* now we can safely return */
 					return SNPES_OK;
-				}
-				else if (get_pkt_type(&buf) == FULL) {
+				} else if (get_pkt_type(&buf) == FULL) {
 					return SNPES_ERROR;
 				}
 				/* else, just ignore it */
@@ -112,27 +120,32 @@ SnpesStatus_t snpes_send(uint8_t dest_uid, const void *src, uint8_t size)
 		/* ask for permission to send data */
 		while (timeout_cnt < MAX_TIMEOUT_CNT) {
 			/* build a TRANS_START packet and send it */
-			build_signal(&buf, TRANS_START, unique_id, network_id, dest_uid, GATEWAY, ((MAX_PKT_CNT<<2) | (timeout_cnt&3)));
+			build_signal(&buf, TRANS_START, unique_id, network_id,
+				     dest_uid, GATEWAY,
+				     ((MAX_PKT_CNT << 2) | (timeout_cnt & 3)));
 			buf.data_size = size;
-			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
+			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf,
+					    META_SIZE);
 			timer_ref = hw.timer->millis();
-			while ((hw.timer->millis() - timer_ref) <= TIMEOUT_THLD) {
+			while ((hw.timer->millis() - timer_ref) <=
+			       TIMEOUT_THLD) {
 				/* wait until there is some packet availible */
 				if (hw.socket->pkt_avail()) {
 					/* read the availible packet */
-					hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
+					hw.socket->pkt_recv(&recv_nid,
+							    (uint8_t *)&buf,
+							    &recv_size);
 					/* if it's the signal we're looking for */
 					if (get_pkt_type(&buf) == TRANS_START) {
 						/* get out of this nested loops */
 						goto SEND_DATA;
-					}
-					else if (get_pkt_type(&buf) == FULL) {
+					} else if (get_pkt_type(&buf) == FULL) {
 						return SNPES_ERROR;
 					}
 					/* else, just ignore it */
 				}
 			}
-		timeout_cnt++;
+			timeout_cnt++;
 		}
 	}
 	return ret;
@@ -142,16 +155,21 @@ SEND_DATA:
 		timeout_cnt = 0;
 		while (timeout_cnt < MAX_TIMEOUT_CNT) {
 			/* build the data packet */
-			build_data(&buf, unique_id, network_id, dest_uid, GATEWAY, MAX_PKT_CNT, src, size);
-			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE+size);
+			build_data(&buf, unique_id, network_id, dest_uid,
+				   GATEWAY, MAX_PKT_CNT, src, size);
+			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf,
+					    META_SIZE + size);
 			timer_ref = hw.timer->millis();
-			while ((hw.timer->millis() - timer_ref) <= TIMEOUT_THLD) {
+			while ((hw.timer->millis() - timer_ref) <=
+			       TIMEOUT_THLD) {
 				if (hw.socket->pkt_avail()) {
-					hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
+					hw.socket->pkt_recv(&recv_nid,
+							    (uint8_t *)&buf,
+							    &recv_size);
 					if (get_pkt_type(&buf) == ACK) {
 						return SNPES_OK;
-					}
-					else if (get_pkt_type(&buf) == TRANS_RETRY) {
+					} else if (get_pkt_type(&buf) ==
+						   TRANS_RETRY) {
 						break;
 					}
 					/* else, just ignore it */
@@ -173,7 +191,8 @@ static SnpesStatus_t wait_signal(PacketType_t signal)
 		/* wait util there is some packet availible */
 		if (hw.socket->pkt_avail()) {
 			/* read the availible packet */
-			hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
+			hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf,
+					    &recv_size);
 			/* if it's the signal we're looking for */
 			if (get_pkt_type(&buf) == signal) {
 				ret = SNPES_OK;
