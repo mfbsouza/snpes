@@ -107,6 +107,12 @@ else
 	@$(OD) -h -S $< > $@
 endif
 
+# target for code style formatting
+format:
+	find . \
+		-regex '.*\.\(cpp\|hpp\|cc\|cxx\|c\|h\)' \
+		-exec clang-format -style=file -i {} \;
+
 # target for building the docker image for testing
 docker_image:
 	docker build . -t snpes-tests
@@ -121,7 +127,8 @@ tests:
 
 # target for code coverage
 coverage: tests
-	@lcov --capture --directory $(OBJDIR)/src --output-file $(OBJDIR)/coverage.info
+	@lcov --capture --directory $(OBJDIR)/src \
+		--output-file $(OBJDIR)/coverage.info
 	@genhtml $(OBJDIR)/coverage.info --output-directory $(BUILDDIR)/coverage
 	@echo
 	@echo -n "Written coverage report to $(BUILDDIR)/coverage/index.html"

@@ -6,10 +6,11 @@
 #define BYTE_ALIGN 8
 #define HEADER_SIZE 2
 #define FOOTER_SIZE HEADER_SIZE
-#define METADATA_SIZE HEADER_SIZE*2
+#define METADATA_SIZE HEADER_SIZE * 2
 
 /**
- * @brief The Memory Manager Context Struct contains information about the Fake Heap
+ * @brief The Memory Manager Context Struct contains information about the
+ * Fake Heap
  *
  * @param *heap_start: The start address of a continuous amount of memory
  * @param *heap_end: The last address of a continuous amount of memory
@@ -38,7 +39,7 @@ int8_t memmgr_init(MemMgr_t *mem_ctx, void *start, uint16_t size);
  *
  * @retval the start address of the allocated memory region
  */
-void* memmgr_alloc(MemMgr_t *mem_ctx, uint16_t size);
+void *memmgr_alloc(MemMgr_t *mem_ctx, uint16_t size);
 
 /**
  * @brief allocates a continuous memory region

@@ -6,7 +6,8 @@ MAINTAINER Matheus Souza <mfbsouza.it@gmail.com>
 
 # setup dependencies for this image
 RUN apt-get update && \
-	apt-get install -y -q --no-install-recommends file git gcc g++ make automake autoconf libtool
+	apt-get install -y -q --no-install-recommends \
+	file git gcc g++ make automake autoconf libtool
 
 ## clone cpputest
 WORKDIR /repo

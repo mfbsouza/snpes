@@ -1,12 +1,12 @@
 #include <CppUTest/TestHarness.h>
 
-extern "C"{
+extern "C" {
 #include <CircularQueue.h>
 }
 
 TEST_GROUP(CircularQueueTests)
 {
-	uint8_t buffer[sizeof(int)*4];
+	uint8_t buffer[sizeof(int) * 4];
 	Queue_t test_queue;
 };
 
@@ -45,7 +45,7 @@ TEST(CircularQueueTests, QueueTwoPushs)
 	queue_push(&test_queue, &a);
 	queue_push(&test_queue, &b);
 	CHECK_EQUAL(12, *(int *)buffer);
-	CHECK_EQUAL(14, *(int *)(buffer+test_queue.elmt_size));
+	CHECK_EQUAL(14, *(int *)(buffer + test_queue.elmt_size));
 	a = queue_remaining(&test_queue);
 	CHECK_EQUAL(2, a);
 }
@@ -150,7 +150,7 @@ TEST(CircularQueueTests, QueuePeek)
 
 TEST(CircularQueueTests, QueueOfPointers)
 {
-	int* pointer_buf[3];
+	int *pointer_buf[3];
 	Queue_t pointer_queue;
 	int a = 13;
 	int *ptr = &a;

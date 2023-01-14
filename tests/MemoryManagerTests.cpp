@@ -1,6 +1,6 @@
 #include <CppUTest/TestHarness.h>
 
-extern "C"{
+extern "C" {
 #include <MemoryManager.h>
 #include <string.h>
 }

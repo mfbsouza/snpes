@@ -6,10 +6,7 @@
 #include "ConnInterface.h"
 #include "TimerInterface.h"
 
-typedef enum {
-	SNPES_OK,
-	SNPES_ERROR
-} SnpesStatus_t;
+typedef enum { SNPES_OK, SNPES_ERROR } SnpesStatus_t;
 
 /**
  * @brief initializes the snpes protocol as a node device
