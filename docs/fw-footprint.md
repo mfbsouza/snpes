@@ -1,12 +1,23 @@
 # firmware footprint experiment
 
-## Arduino Uno: Snpes Node Lib + LoRaMESH Driver + User code
+## Arduino Uno
+
+### Snpes Node Lib + LoRaMESH Driver + User code
 
 	Linking .pio/build/uno/firmware.elf
 	Checking size .pio/build/uno/firmware.elf
 	Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 	RAM:   [====      ]  38.6% (used 790 bytes from 2048 bytes)
 	Flash: [==        ]  18.9% (used 6090 bytes from 32256 bytes)
+	Building .pio/build/uno/firmware.hex
+
+### Empty Project + LoRaMESH Driver
+
+	Linking .pio/build/uno/firmware.elf
+	Checking size .pio/build/uno/firmware.elf
+	Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+	RAM:   [=         ]  12.3% (used 252 bytes from 2048 bytes)
+	Flash: [          ]   1.6% (used 520 bytes from 32256 bytes)
 	Building .pio/build/uno/firmware.hex
 
 ### Empty Project
@@ -18,18 +29,24 @@
 	Flash: [          ]   1.4% (used 444 bytes from 32256 bytes)
 	Building .pio/build/uno/firmware.hex
 
-### Average size:
+## STM32
 
-* RAM: 790 - 9 = 781 bytes, 38.2%
-* Flash: 6090 - 444 = 5646 bytes, 17.5%
-
-## STM32: Snpes Node Lib + LoRaMESH Driver + User code
+### Snpes Node Lib + LoRaMESH Driver + User code
 
 	Linking .pio/build/genericSTM32F103C8/firmware.elf
 	Checking size .pio/build/genericSTM32F103C8/firmware.elf
 	Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 	RAM:   [=         ]   7.5% (used 1540 bytes from 20480 bytes)
 	Flash: [===       ]  28.1% (used 18396 bytes from 65536 bytes)
+	Building .pio/build/genericSTM32F103C8/firmware.bin
+
+### Empty Project + LoRaMESH Driver
+
+	Linking .pio/build/genericSTM32F103C8/firmware.elf
+	Checking size .pio/build/genericSTM32F103C8/firmware.elf
+	Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+	RAM:   [          ]   5.0% (used 1020 bytes from 20480 bytes)
+	Flash: [=         ]  11.6% (used 7604 bytes from 65536 bytes)
 	Building .pio/build/genericSTM32F103C8/firmware.bin
 
 ### Empty Project
@@ -41,19 +58,26 @@
 	Flash: [=         ]  10.6% (used 6916 bytes from 65536 bytes)
 	Building .pio/build/genericSTM32F103C8/firmware.bin
 
-### Average size:
+## ESP32
 
-* RAM: 1540 - 764 = 776 bytes, 3.8%
-* Flash: 18396 - 6916 = 11480 bytes, 17.5%
-
-## ESP32: Snpes Gateway Lib + LoRaMESH Driver + User code
+### Snpes Gateway Lib + LoRaMESH Driver + User code
 
 	Linking .pio/build/esp32doit-devkit-v1/firmware.elf
 	Retrieving maximum program size .pio/build/esp32doit-devkit-v1/firmware.elf
 	Checking size .pio/build/esp32doit-devkit-v1/firmware.elf
 	Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-	RAM:   [=         ]   5.4% (used 17576 bytes from 327680 bytes)
-	Flash: [==        ]  19.1% (used 250721 bytes from 1310720 bytes)
+	RAM:   [=         ]   7.1% (used 23288 bytes from 327680 bytes)
+	Flash: [==        ]  20.4% (used 268029 bytes from 1310720 bytes)
+	Building .pio/build/esp32doit-devkit-v1/firmware.bin
+
+### Empty Project + LoRaMESH Driver
+
+	Linking .pio/build/esp32doit-devkit-v1/firmware.elf
+	Retrieving maximum program size .pio/build/esp32doit-devkit-v1/firmware.elf
+	Checking size .pio/build/esp32doit-devkit-v1/firmware.elf
+	Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+	RAM:   [=         ]   6.7% (used 22108 bytes from 327680 bytes)
+	Flash: [==        ]  17.6% (used 230345 bytes from 1310720 bytes)
 	Building .pio/build/esp32doit-devkit-v1/firmware.bin
 
 ### Empty Project
@@ -62,13 +86,6 @@
 	Retrieving maximum program size .pio/build/esp32doit-devkit-v1/firmware.elf
 	Checking size .pio/build/esp32doit-devkit-v1/firmware.elf
 	Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-	RAM:   [          ]   4.9% (used 16144 bytes from 327680 bytes)
-	Flash: [==        ]  16.2% (used 212961 bytes from 1310720 bytes)
+	RAM:   [=         ]   6.7% (used 21860 bytes from 327680 bytes)
+	Flash: [==        ]  17.5% (used 229209 bytes from 1310720 bytes)
 	Building .pio/build/esp32doit-devkit-v1/firmware.bin
-
-
-### Average size:
-
-* RAM: 17576 - 16144 = 1432 bytes, 0.5%
-* Flash: 250721 - 212961 = 37760 bytes, 2.9%
-
