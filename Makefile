@@ -76,7 +76,7 @@ $(COBJS) : $(OBJDIR)/%.o : %.c
 ifeq ($(VERBOSE),1)
 	$(CC) -c $(CFLAGS) $< -o $@
 else
-	@echo -n "[CC]\t$<\n"
+	@echo -n -e "[CC]\t$<\n"
 	@$(CC) -c $(CFLAGS) $< -o $@
 endif
 
@@ -85,7 +85,7 @@ $(CXXOBJS) : $(OBJDIR)/%.o : %.cpp
 ifeq ($(VERBOSE),1)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 else
-	@echo -n "[CXX]\t$<\n"
+	@echo -n -e "[CXX]\t$<\n"
 	@$(CXX) -c $(CXXFLAGS) $< -o $@
 endif
 
@@ -94,7 +94,7 @@ $(BINDIR)/$(PROJECT).elf: $(OBJS)
 ifeq ($(VERBOSE),1)
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
 else
-	@echo -n "[LD]\t./$@\n"
+	@echo -n -e "[LD]\t./$@\n"
 	@$(LD) $(LDFLAGS) $(OBJS) -o $@
 endif
 
@@ -103,7 +103,7 @@ $(BUILDDIR)/$(PROJECT).lst: $(BINDIR)/$(PROJECT).elf
 ifeq ($(VERBOSE),1)
 	$(OD) -h -S $< > $@
 else
-	@echo -n "[OD]\t./$@\n"
+	@echo -n -e "[OD]\t./$@\n"
 	@$(OD) -h -S $< > $@
 endif
 
@@ -127,11 +127,12 @@ tests:
 
 # target for code coverage
 coverage: tests
-	@lcov --capture --directory $(OBJDIR)/src \
+	@lcov --quiet --capture --directory $(OBJDIR)/src \
 		--output-file $(OBJDIR)/coverage.info
-	@genhtml $(OBJDIR)/coverage.info --output-directory $(BUILDDIR)/coverage
+	@genhtml --quiet $(OBJDIR)/coverage.info \
+		--output-directory $(BUILDDIR)/coverage
 	@echo
-	@echo -n "Written coverage report to $(BUILDDIR)/coverage/index.html"
+	@echo -n -e "Written coverage report to $(BUILDDIR)/coverage/index.html\n"
 	@echo
 
 # target for cleaning files
