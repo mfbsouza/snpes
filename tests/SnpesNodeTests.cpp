@@ -105,7 +105,7 @@ TEST(SnpesNodeTests, Scan)
 	uint8_t gw_uid = 0;
 	snpes_node_init(0xAA, &TestLora, &TestTimer);
 	/* build fake INFO packet */
-	build_signal(&recv_buf, INFO, 0x55, 0x00, 0xAA, 0xFF, 0x0);
+	build_signal(&recv_buf, INFO, 0x55, 0x00, 0xAA, 0xFF, 0x0, 0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	ret = snpes_scan(&gw_uid);
 	CHECK_EQUAL(SNPES_OK, ret);
@@ -144,7 +144,7 @@ TEST(SnpesNodeTests, Connect)
 
 	snpes_node_init(0xAA, &TestLora, &TestTimer);
 	/* build fake INFO packet */
-	build_signal(&recv_buf, FULL, 0x55, 0x00, 0xAA, 0xFF, 0x0);
+	build_signal(&recv_buf, FULL, 0x55, 0x00, 0xAA, 0xFF, 0x0, 0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	ret = snpes_connect(0x55);
 	CHECK_EQUAL(SNPES_ERROR, ret);
@@ -188,7 +188,7 @@ TEST(SnpesNodeTests, Send)
 	CHECK_EQUAL(5, response->flgs_seq & 0x0F);
 
 	/* build fake TRANS_START packet */
-	build_signal(&recv_buf, TRANS_START, 0x55, 0x00, 0xAA, 0x01, 0x0);
+	build_signal(&recv_buf, TRANS_START, 0x55, 0x00, 0xAA, 0x01, 0x0, 0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
 	mock().expectOneCall("mock_timer").andReturnValue(1);
@@ -207,14 +207,14 @@ TEST(SnpesNodeTests, Send)
 	CHECK_EQUAL(data, response->data[0]);
 
 	/* build fake FULL packet */
-	build_signal(&recv_buf, FULL, 0x55, 0x00, 0xAA, 0x01, 0x0);
+	build_signal(&recv_buf, FULL, 0x55, 0x00, 0xAA, 0x01, 0x0, 0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
 	ret = snpes_send(0x55, &data, sizeof(uint8_t));
 	CHECK_EQUAL(SNPES_ERROR, ret);
 
-	build_signal(&recv_buf, TRANS_START, 0x55, 0x00, 0xAA, 0x01, 0x0);
-	build_signal(&recv_buf2, ACK, 0x55, 0x00, 0xAA, 0x01, 0x0);
+	build_signal(&recv_buf, TRANS_START, 0x55, 0x00, 0xAA, 0x01, 0x0, 0);
+	build_signal(&recv_buf2, ACK, 0x55, 0x00, 0xAA, 0x01, 0x0, 0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
 
@@ -223,7 +223,7 @@ TEST(SnpesNodeTests, Send)
 	ret = snpes_send(0x55, &data, sizeof(uint8_t));
 	CHECK_EQUAL(SNPES_OK, ret);
 
-	build_signal(&recv_buf2, TRANS_RETRY, 0x55, 0x00, 0xAA, 0x01, 0x0);
+	build_signal(&recv_buf2, TRANS_RETRY, 0x55, 0x00, 0xAA, 0x01, 0x0, 0);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
 

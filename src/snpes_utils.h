@@ -14,10 +14,11 @@
  * @param dest_uid: UID of the destination
  * @param dest_nid: NID of the destination
  * @param seq: Sequence Number of the Packet
+ * @param size: Data size
  */
 void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid,
 		  uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid,
-		  uint8_t seq);
+		  uint8_t seq, uint8_t size);
 
 /**
  * @brief loads given data to a Packet in data format
@@ -43,9 +44,10 @@ void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid,
  * @param dest_uid: UID of the destination node
  * @param dest_nid: NID of the destination node
  * @param seq: sequence number of the signal
+ * @param size: Data size
  */
 void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid,
-		    uint8_t dest_nid, uint8_t seq);
+		    uint8_t dest_nid, uint8_t seq, uint8_t size);
 
 /**
  * @brief enqueue a Data Packet to the stream out of a given protocol device
@@ -111,6 +113,14 @@ ClientCtx_t *get_waiting_client(ClientCtx_t *arr);
  * @retval pointer to the Client Context or Null for None
  */
 ClientCtx_t *get_data_avail_client(ClientCtx_t *arr);
+
+/**
+ * @brief gets the pointer to the first client that has data availible to send
+ *
+ * @param *arr: the client list array
+ * @retval pointer to the Client Context or Null for None
+ */
+ClientCtx_t *get_rts_client(ClientCtx_t *arr);
 
 /**
  * @brief gets the Packet Flag Type of a given Packet Struct

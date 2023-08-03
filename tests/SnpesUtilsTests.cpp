@@ -61,7 +61,7 @@ TEST(SnpesUtilsTests, GetDataAvailClient)
 TEST(SnpesUtilsTests, EnqueueSignal)
 {
 	queue_init(&test_dev.stream_out, stream_buf, PKT_SIZE, S_IN_CNT);
-	enqueue_signal(&test_dev, SYNC, 0x14, 0x16, 0x0);
+	enqueue_signal(&test_dev, SYNC, 0x14, 0x16, 0x0, 0);
 	CHECK_EQUAL(0x13, ((Packet_t *)stream_buf)->src_uid);
 	CHECK_EQUAL(0x45, ((Packet_t *)stream_buf)->src_nid);
 	CHECK_EQUAL(0x14, ((Packet_t *)stream_buf)->dest_uid);
@@ -138,6 +138,6 @@ TEST(SnpesUtilsTests, GetClientContext)
 TEST(SnpesUtilsTests, GetPacketType)
 {
 	queue_init(&test_dev.stream_out, stream_buf, PKT_SIZE, S_IN_CNT);
-	enqueue_signal(&test_dev, SYNC, 0x14, 0x16, 0x0);
+	enqueue_signal(&test_dev, SYNC, 0x14, 0x16, 0x0, 0);
 	CHECK_EQUAL(SYNC, get_pkt_type((Packet_t *)stream_buf));
 }

@@ -7,7 +7,7 @@
 
 void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid,
 		  uint8_t src_nid, uint8_t dest_uid, uint8_t dest_nid,
-		  uint8_t seq)
+		  uint8_t seq, uint8_t size)
 {
 	assert(pkt);
 	pkt->src_uid = src_uid;
@@ -15,7 +15,7 @@ void build_signal(Packet_t *pkt, PacketType_t signal, uint8_t src_uid,
 	pkt->dest_uid = dest_uid;
 	pkt->dest_nid = dest_nid;
 	pkt->flgs_seq = ((signal << 4) & 0xF0) | (seq & 0x0F);
-	pkt->data_size = 0;
+	pkt->data_size = size;
 }
 
 void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid,
@@ -33,7 +33,7 @@ void build_data(Packet_t *pkt, uint8_t src_uid, uint8_t src_nid,
 }
 
 void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid,
-		    uint8_t dest_nid, uint8_t seq)
+		    uint8_t dest_nid, uint8_t seq, uint8_t size)
 {
 	assert(dev);
 	Packet_t *dest = NULL;
@@ -41,7 +41,7 @@ void enqueue_signal(DeviceCtx_t *dev, PacketType_t signal, uint8_t dest_uid,
 	if (!queue_full(&dev->stream_out)) {
 		dest = (Packet_t *)queue_alloc(&dev->stream_out);
 		build_signal(dest, signal, dev->unique_id, dev->network_id,
-			     dest_uid, dest_nid, seq);
+			     dest_uid, dest_nid, seq, size);
 	}
 }
 
@@ -118,6 +118,17 @@ ClientCtx_t *get_data_avail_client(ClientCtx_t *arr)
 	assert(arr);
 	for (int ii = 0; ii < CLT_CNT; ii++) {
 		if (arr[ii].state == DATA_AVAIL) {
+			return &(arr[ii]);
+		}
+	}
+	return NULL;
+}
+
+ClientCtx_t *get_rts_client(ClientCtx_t *arr)
+{
+	assert(arr);
+	for (int ii = 0; ii < CLT_CNT; ii++) {
+		if (arr[ii].out_expt_pkt != 0) {
 			return &(arr[ii]);
 		}
 	}
