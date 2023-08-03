@@ -10,9 +10,9 @@
 /* private variables */
 
 static DeviceCtx_t dev;
-static uint8_t buf[BUF_SIZE] = { 0 };
-static uint8_t heap[HEAP_SIZE] = { 0 };
-static ClientCtx_t clients[CLT_CNT] = { 0 };
+static uint8_t buf[BUF_SIZE] = { 0 }; // stream handler memory
+static uint8_t heap[HEAP_SIZE] = { 0 }; // memory manager memory
+static ClientCtx_t clients[CLT_CNT] = { 0 }; // client manager memory
 
 /* private functions */
 
@@ -64,28 +64,52 @@ uint16_t snpes_data_available(void)
 	uint16_t ret = 0;
 	ClientCtx_t *clt = NULL;
 	if ((clt = get_data_avail_client(clients)) != NULL) {
-		ret = clt->data_size;
+		ret = clt->recv_data_size;
 	}
 	return ret;
 }
 
 void snpes_read(uint8_t *clt_uid, void *dest, uint16_t *size)
 {
+	/* avoid null pointers */
 	assert(clt_uid);
 	assert(dest);
 	assert(size);
+
 	ClientCtx_t *clt = NULL;
 
 	if ((clt = get_data_avail_client(clients)) != NULL) {
 		/* copy the data to the user */
-		memcpy(dest, clt->data, clt->data_size);
-		*size = clt->data_size;
+		memcpy(dest, clt->recv_data, clt->recv_data_size);
+		*size = clt->recv_data_size;
 		*clt_uid = clt->unique_id;
 		/* free the memory */
-		memmgr_free(&dev.mem, clt->data);
+		memmgr_free(&dev.mem, clt->recv_data);
 		/* send the client back to the idle state */
 		clt->state = IDLE;
 	}
+}
+
+SnpesStatus_t snpes_write(uint8_t clt_uid, const void *src, uint16_t size)
+{
+	/* avoid null pointers */
+	assert(src);
+
+	ClientCtx_t *clt = NULL;
+	SnpesStatus_t ret = SNPES_ERROR;
+
+	if (MAX_USER_DATA_SIZE >= size &&
+	    (clt = find_client_ctx(clients, clt_uid)) != NULL &&
+	    (clt->send_data = memmgr_alloc(&dev.mem, size)) != NULL) {
+		memcpy(clt->send_data, src, size);
+		clt->send_data_size = size;
+		clt->outgoing_pkt_cnt = size / MAX_PKT_DATA_SIZE;
+		clt->outgoing_pkt_cnt += ((size % MAX_PKT_DATA_SIZE) != 0) ? 1 :
+									     0;
+		clt->out_expt_pkt = 1;
+		ret = SNPES_OK;
+	}
+	return ret;
 }
 
 static void stream_handler()
@@ -149,7 +173,7 @@ static void alive_checker()
 	/* send a ALIVE signal */
 	if (clt != NULL) {
 		enqueue_signal(&dev, ALIVE, clt->unique_id, clt->network_id,
-			       clt->timeout_cnt);
+			       clt->timeout_cnt, 0);
 		clt->timer_ref = dev.hw.timer->millis();
 	}
 }
@@ -184,11 +208,21 @@ static void gateway_state_machine()
 			clt = get_client_ctx(clients, pkt->src_nid);
 			if (clt->connected != NOT_CONNETED) {
 				/* it's *actually* a client */
-				if (get_pkt_type(pkt) == ACK)
+				if (get_pkt_type(pkt) == ACK &&
+				    clt->state != WAIT_DATA_ACK)
 					state = RECV_ACK;
 				else if (get_pkt_type(pkt) == DATA &&
 					 clt->state == WAIT_DATA)
 					state = RECV_DATA;
+				else if (get_pkt_type(pkt) == TRANS_START &&
+					 clt->state == WAIT_TRANS_START)
+					state = SEND_DATA;
+				else if (get_pkt_type(pkt) == FULL &&
+					 clt->state == WAIT_TRANS_START)
+					state = RECV_FULL;
+				else if (get_pkt_type(pkt) == ACK &&
+					 clt->state == WAIT_DATA_ACK)
+					state = SEND_DATA;
 				else
 					state = clt->state;
 				/**
@@ -206,7 +240,12 @@ static void gateway_state_machine()
 			}
 		}
 	}
-	/* if there isn't packets inputs, check for clients in the waiting state */
+	/* if there isn't packets inputs, check if there is clients to send data */
+	else if ((clt = get_rts_client(clients)) != NULL &&
+		 clt->state == IDLE) {
+		state = clt->state = SEND_TRANS_START;
+	}
+	/* if none of the above, check for clients in the waiting state */
 	else if ((clt = get_waiting_client(clients)) != NULL) {
 		state = clt->state;
 	}
@@ -218,7 +257,7 @@ static void gateway_state_machine()
 	/* Now that we have a state, let's process */
 	switch (state) {
 	case SEND_INFO:
-		enqueue_signal(&dev, INFO, pkt->src_uid, pkt->src_nid, 0x0);
+		enqueue_signal(&dev, INFO, pkt->src_uid, pkt->src_nid, 0x0, 0);
 		break;
 
 	case RECV_SYNC:
@@ -232,7 +271,7 @@ static void gateway_state_machine()
 		/* if there isn't free network IDs */
 		if (new_nid == 0) {
 			enqueue_signal(&dev, FULL, pkt->src_uid, pkt->src_nid,
-				       0x0);
+				       0x0, 0);
 		}
 		/* else, setup to waiting ack */
 		else {
@@ -240,8 +279,8 @@ static void gateway_state_machine()
 			clt->unique_id = pkt->src_uid;
 			clt->timeout_cnt = 0;
 			clt->state = WAIT_ACK;
-			clt->data = NULL;
-			clt->data_size = 0;
+			clt->recv_data = NULL;
+			clt->recv_data_size = 0;
 			clt->timer_ref = dev.hw.timer->millis();
 			enqueue_data(&dev, clt->unique_id, pkt->src_nid, 0x00,
 				     &new_nid, sizeof(uint8_t));
@@ -268,8 +307,12 @@ static void gateway_state_machine()
 
 	case RECV_ACK:
 		/* update client info as connected */
-		clt->connected = CONNECTED;
-		clt->state = IDLE;
+		if (clt->state == WAIT_ACK) {
+			clt->connected = CONNECTED;
+			clt->state = IDLE;
+		}
+
+		/* reset the timer references */
 		clt->timeout_cnt = 0;
 		clt->timer_ref = 0;
 
@@ -279,34 +322,35 @@ static void gateway_state_machine()
 
 	case IDLE:
 		/* check if it's a valid transmission start signal */
+		/* TODO: should do a "+1" before comparing to MAX_PKT_CNT */
 		if (get_pkt_type(pkt) == TRANS_START &&
 		    ((get_pkt_seq_number(pkt) >> 2) & 0b11) <= MAX_PKT_CNT) {
 			/* make sure we only allocate memory for this transmission once */
 			/* TODO: this ain't probably safe, we are trusting the client to 
 			 * send us a valid retry number */
 			if ((get_pkt_seq_number(pkt) & 3) == 0) {
-				clt->data =
+				clt->recv_data =
 					memmgr_alloc(&dev.mem, pkt->data_size);
 			}
 			/* check if there was free memory space to receive the
 			 * client data */
-			if (clt->data == NULL) {
+			if (clt->recv_data == NULL) {
 				/* there wasn't */
 				enqueue_signal(&dev, FULL, clt->unique_id,
-					       clt->network_id, 0x0);
+					       clt->network_id, 0x0, 0);
 			}
 			/* it's all good, tell the client it can start sending data */
 			else {
 				clt->state = WAIT_DATA;
 				clt->timeout_cnt = 0;
-				clt->data_size = 0;
-				clt->pkt_cnt =
+				clt->recv_data_size = 0;
+				clt->income_pkt_cnt =
 					((get_pkt_seq_number(pkt) >> 2) & 3);
-				clt->expected_pkt = 1;
+				clt->in_expt_pkt = 1;
 				clt->timer_ref = dev.hw.timer->millis();
 				enqueue_signal(&dev, TRANS_START,
 					       clt->unique_id, clt->network_id,
-					       0x0);
+					       0x0, 0);
 			}
 		}
 
@@ -321,12 +365,12 @@ static void gateway_state_machine()
 			if (++clt->timeout_cnt == MAX_TIMEOUT_CNT) {
 				/* send the client back to the idle state */
 				// TODO: should i deallocate that client?
-				memmgr_free(&dev.mem, clt->data);
+				memmgr_free(&dev.mem, clt->recv_data);
 				clt->timeout_cnt = 0;
 				clt->timer_ref = 0;
-				clt->data_size = 0;
-				clt->pkt_cnt = 0;
-				clt->expected_pkt = 0;
+				clt->recv_data_size = 0;
+				clt->income_pkt_cnt = 0;
+				clt->in_expt_pkt = 0;
 				clt->state = IDLE;
 			}
 			/* else, try again */
@@ -334,24 +378,25 @@ static void gateway_state_machine()
 				clt->timer_ref = dev.hw.timer->millis();
 				enqueue_signal(&dev, TRANS_RETRY,
 					       clt->unique_id, clt->network_id,
-					       clt->expected_pkt);
+					       clt->in_expt_pkt, 0);
 			}
 		}
 		break;
 
 	case RECV_DATA:
 		/* check if the packet we received was the expected */
-		if (get_pkt_seq_number(pkt) == clt->expected_pkt) {
+		if (get_pkt_seq_number(pkt) == clt->in_expt_pkt) {
 			/* save the data */
-			memcpy(((uint8_t *)clt->data + clt->data_size),
+			memcpy(((uint8_t *)clt->recv_data +
+				clt->recv_data_size),
 			       pkt->data, pkt->data_size);
-			clt->data_size += pkt->data_size;
+			clt->recv_data_size += pkt->data_size;
 			/* tell the client we received the data */
 			enqueue_signal(&dev, ACK, clt->unique_id,
-				       clt->network_id, 0x0);
+				       clt->network_id, 0x0, 0);
 
 			/* check if that was the last packet */
-			if (++clt->expected_pkt > clt->pkt_cnt) {
+			if (++clt->in_expt_pkt > clt->income_pkt_cnt) {
 				clt->state = DATA_AVAIL;
 				clt->timeout_cnt = 0;
 				clt->timer_ref = 0;
@@ -360,6 +405,144 @@ static void gateway_state_machine()
 
 		/* save the last time the gateway talked to this client in seconds */
 		clt->alive_ref = (uint32_t)(dev.hw.timer->millis() / 1000);
+		break;
+
+	case SEND_TRANS_START:
+		enqueue_signal(
+			&dev, TRANS_START, clt->unique_id, clt->network_id,
+			((clt->outgoing_pkt_cnt << 2) | (clt->timeout_cnt & 3)),
+			clt->send_data_size);
+		/* setup to waiting trans start ack */
+		clt->timeout_cnt = 0;
+		clt->timer_ref = dev.hw.timer->millis();
+		clt->state = WAIT_TRANS_START;
+		break;
+
+	case WAIT_TRANS_START:
+		if ((dev.hw.timer->millis() - clt->timer_ref) >= TIMEOUT_THLD) {
+			/* if there is no response till now, and we reached a maximum
+			 * amount of trys */
+			if (++clt->timeout_cnt == MAX_TIMEOUT_CNT) {
+				/* clear the data that we failed to send */
+				/* send the client back to the idle state */
+				// TODO: should i deallocate that client?
+				memmgr_free(&dev.mem, clt->send_data);
+				clt->timeout_cnt = 0;
+				clt->timer_ref = 0;
+				clt->send_data_size = 0;
+				clt->outgoing_pkt_cnt = 0;
+				clt->out_expt_pkt = 0;
+				clt->state = IDLE;
+			}
+			/* else, try again */
+			else {
+				clt->timer_ref = dev.hw.timer->millis();
+				enqueue_signal(&dev, TRANS_START,
+					       clt->unique_id, clt->network_id,
+					       ((clt->outgoing_pkt_cnt << 2) |
+						(clt->timeout_cnt & 3)),
+					       clt->send_data_size);
+			}
+		}
+		break;
+
+	case RECV_FULL:
+		/* clear the data that we failed to send */
+		/* send the client back to the idle state */
+		// TODO: inform that we were unable to send the data
+		memmgr_free(&dev.mem, clt->send_data);
+		clt->timeout_cnt = 0;
+		clt->timer_ref = 0;
+		clt->send_data_size = 0;
+		clt->outgoing_pkt_cnt = 0;
+		clt->out_expt_pkt = 0;
+		clt->state = IDLE;
+
+		/* save the last time the gateway talked to this client in seconds */
+		clt->alive_ref = (uint32_t)(dev.hw.timer->millis() / 1000);
+		break;
+
+	case SEND_DATA:
+		/* check if we are here because of a data ack */
+		if (pkt != NULL && get_pkt_type(pkt) == ACK) {
+			clt->out_expt_pkt++;
+			clt->outgoing_pkt_cnt--;
+			clt->send_data_size -= MAX_PKT_DATA_SIZE;
+			/* check if there is any more data to send */
+			if (0 == clt->outgoing_pkt_cnt) {
+				/* there isn't. free the memory and send it back to idle */
+				memmgr_free(&dev.mem, clt->send_data);
+				clt->timeout_cnt = 0;
+				clt->timer_ref = 0;
+				clt->send_data_size = 0;
+				clt->outgoing_pkt_cnt = 0;
+				clt->out_expt_pkt = 0;
+				clt->state = IDLE;
+			}
+		}
+		/* create data packet to send */
+		if (1 > clt->outgoing_pkt_cnt) {
+			enqueue_data(
+				&dev, clt->unique_id, clt->network_id,
+				clt->out_expt_pkt,
+				((uint8_t *)clt->send_data +
+				 ((clt->out_expt_pkt - 1) * MAX_PKT_DATA_SIZE)),
+				MAX_PKT_DATA_SIZE);
+		} else {
+			enqueue_data(
+				&dev, clt->unique_id, clt->network_id,
+				clt->out_expt_pkt,
+				((uint8_t *)clt->send_data +
+				 ((clt->out_expt_pkt - 1) * MAX_PKT_DATA_SIZE)),
+				clt->send_data_size);
+		}
+		clt->state = WAIT_DATA_ACK;
+
+		/* save the last time the gateway talked to this client in seconds */
+		clt->alive_ref = (uint32_t)(dev.hw.timer->millis() / 1000);
+		break;
+
+	case WAIT_DATA_ACK:
+		if ((dev.hw.timer->millis() - clt->timer_ref) >= TIMEOUT_THLD) {
+			/* if there is no response till now, and we reached a maximum
+			 * amount of trys */
+			if (++clt->timeout_cnt == MAX_TIMEOUT_CNT) {
+				/* clear the data that we failed to send */
+				/* send the client back to the idle state */
+				// TODO: should i deallocate that client?
+				memmgr_free(&dev.mem, clt->send_data);
+				clt->timeout_cnt = 0;
+				clt->timer_ref = 0;
+				clt->send_data_size = 0;
+				clt->outgoing_pkt_cnt = 0;
+				clt->out_expt_pkt = 0;
+				clt->state = IDLE;
+			}
+			/* else, try again */
+			else {
+				clt->timer_ref = dev.hw.timer->millis();
+				/* create data packet to send */
+				if (1 > clt->outgoing_pkt_cnt) {
+					enqueue_data(
+						&dev, clt->unique_id,
+						clt->network_id,
+						clt->out_expt_pkt,
+						((uint8_t *)clt->send_data +
+						 ((clt->out_expt_pkt - 1) *
+						  MAX_PKT_DATA_SIZE)),
+						MAX_PKT_DATA_SIZE);
+				} else {
+					enqueue_data(
+						&dev, clt->unique_id,
+						clt->network_id,
+						clt->out_expt_pkt,
+						((uint8_t *)clt->send_data +
+						 ((clt->out_expt_pkt - 1) *
+						  MAX_PKT_DATA_SIZE)),
+						clt->send_data_size);
+				}
+			}
+		}
 		break;
 
 	case DATA_AVAIL:

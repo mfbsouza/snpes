@@ -18,7 +18,12 @@ typedef enum {
 	IDLE,
 	WAIT_DATA,
 	RECV_DATA,
-	DATA_AVAIL
+	DATA_AVAIL,
+	SEND_TRANS_START,
+	WAIT_TRANS_START,
+	RECV_FULL,
+	SEND_DATA,
+	WAIT_DATA_ACK
 } States_t;
 
 typedef enum { NOT_CONNETED = 0x00, CONNECTED, CONNECTING } ConnState_t;
@@ -47,11 +52,16 @@ typedef struct {
 	uint8_t timeout_cnt;
 	uint32_t timer_ref;
 	uint32_t alive_ref;
-	/* data buffer */
-	void *data;
-	uint16_t data_size;
-	uint8_t pkt_cnt;
-	uint8_t expected_pkt;
+	/* recive data buffer */
+	void *recv_data;
+	uint16_t recv_data_size;
+	uint8_t income_pkt_cnt;
+	uint8_t in_expt_pkt;
+	/* send data buffer */
+	void *send_data;
+	uint16_t send_data_size;
+	uint8_t outgoing_pkt_cnt;
+	uint8_t out_expt_pkt;
 } ClientCtx_t;
 
 typedef struct {

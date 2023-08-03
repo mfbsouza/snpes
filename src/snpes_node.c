@@ -44,7 +44,7 @@ SnpesStatus_t snpes_scan(uint8_t *gateway_uid)
 	while (timeout_cnt < MAX_TIMEOUT_CNT) {
 		/* build a SCAN packet and send it */
 		build_signal(&buf, SCAN, unique_id, network_id, 0x00, GATEWAY,
-			     timeout_cnt);
+			     timeout_cnt, 0);
 		hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
 		/* wait for a gateway response */
 		if (wait_signal(INFO) == SNPES_OK) {
@@ -70,7 +70,7 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 	while (timeout_cnt < MAX_TIMEOUT_CNT) {
 		/* build a SYNC packet and send it */
 		build_signal(&buf, SYNC, unique_id, network_id, gateway_uid,
-			     GATEWAY, timeout_cnt);
+			     GATEWAY, timeout_cnt, 0);
 		hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf, META_SIZE);
 		timer_ref = hw.timer->millis();
 
@@ -89,7 +89,7 @@ SnpesStatus_t snpes_connect(uint8_t gateway_uid)
 					/* send ACK to the gateway */
 					build_signal(&buf, ACK, unique_id,
 						     network_id, gateway_uid,
-						     buf.src_nid, 0x0);
+						     buf.src_nid, 0x0, 0);
 					hw.socket->pkt_send(buf.dest_nid,
 							    (uint8_t *)&buf,
 							    META_SIZE);
@@ -122,7 +122,8 @@ SnpesStatus_t snpes_send(uint8_t dest_uid, const void *src, uint8_t size)
 			/* build a TRANS_START packet and send it */
 			build_signal(&buf, TRANS_START, unique_id, network_id,
 				     dest_uid, GATEWAY,
-				     ((MAX_PKT_CNT << 2) | (timeout_cnt & 3)));
+				     ((MAX_PKT_CNT << 2) | (timeout_cnt & 3)),
+				     0);
 			buf.data_size = size;
 			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf,
 					    META_SIZE);

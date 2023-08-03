@@ -43,7 +43,8 @@ void snpes_read(uint8_t *clt_uid, void *dest, uint16_t *size);
  * @param clt_uid: the receiver client unique id
  * @param *src: pointer to the buffer that stores the data to send
  * @param size: size of the data located at the src buffer
+ * @retval: SNPES_OK or SNPES_ERROR
  */
-//void snpes_write(uint8_t clt_uid, const void *src, uint16_t size);
+SnpesStatus_t snpes_write(uint8_t clt_uid, const void *src, uint16_t size);
 
 #endif /* __SNPES_H__ */

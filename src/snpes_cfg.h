@@ -1,6 +1,8 @@
 #ifndef __SNPES_CFG_H__
 #define __SNPES_CFG_H__
 
+typedef enum { SNPES_OK, SNPES_ERROR } SnpesStatus_t;
+
 /* SNPES_MILLI CONFIG */
 #if defined(SNPES_MILLI)
 /* Packet size in bytes */
@@ -41,6 +43,9 @@
 /* maxium amount of packets per data transmission */
 #define MAX_PKT_CNT 1
 #endif /* SNPES_ CONFIG */
+
+#define MAX_PKT_DATA_SIZE PKT_SIZE - META_SIZE
+#define MAX_USER_DATA_SIZE MAX_PKT_DATA_SIZE *MAX_PKT_CNT
 
 #define MAX_TIMEOUT_CNT 2
 #define TIMEOUT_THLD 10000 // 10 seconds in milliseconds
