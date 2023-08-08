@@ -1,4 +1,5 @@
 #include "snpes_node.h"
+#include "snpes_cfg.h"
 #include "snpes_utils.h"
 #include "snpes_types.h"
 #include <assert.h>
@@ -10,6 +11,8 @@ static uint8_t unique_id = 0;
 static uint8_t network_id = 0;
 static HwCtx_t hw;
 static Packet_t buf;
+static Packet_t in_pkts[MAX_PKT_CNT];
+static uint8_t in_pkts_cnt = 0;
 
 /* private functions */
 
@@ -181,6 +184,109 @@ SEND_DATA:
 		}
 	}
 	return ret;
+}
+
+void snpes_node_sync(uint8_t gateway_uid)
+{
+	uint8_t recv_nid, recv_size;
+	uint8_t timeout_cnt = 0;
+	uint8_t incoming_pkts = 0;
+	uint8_t expected_pkt = 1;
+
+	if (hw.socket->pkt_avail()) {
+		hw.socket->pkt_recv(&recv_nid, (uint8_t *)&buf, &recv_size);
+		if (get_pkt_type(&buf) == ALIVE) {
+			/* send ACK signal to the gateway */
+			build_signal(&buf, ACK, unique_id, network_id,
+				     gateway_uid, buf.src_nid, 0x0, 0);
+			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf,
+					    META_SIZE);
+		} else if (get_pkt_type(&buf) == TRANS_START) {
+			incoming_pkts = (((buf.flgs_seq & 0x0F) >> 2) & 3);
+			if (0 == in_pkts_cnt && incoming_pkts <= MAX_PKT_CNT) {
+				/* send TRANS_START back */
+				build_signal(&buf, TRANS_START, unique_id,
+					     network_id, gateway_uid,
+					     buf.src_nid, 0x0, 0);
+				hw.socket->pkt_send(buf.dest_nid,
+						    (uint8_t *)&buf, META_SIZE);
+				/* capture the data */
+				while (0 != incoming_pkts &&
+				       MAX_TIMEOUT_CNT > timeout_cnt) {
+					/* wait for data packet */
+					if (wait_signal(DATA) == SNPES_OK &&
+					    (buf.flgs_seq & 0x0F) ==
+						    expected_pkt) {
+						memcpy(&in_pkts[(expected_pkt -
+								 1)],
+						       &buf, sizeof(Packet_t));
+						expected_pkt += 1;
+						incoming_pkts -= 1;
+						in_pkts_cnt += 1;
+						timeout_cnt = 0;
+						/* send a data ack */
+						build_signal(
+							&buf, ACK, unique_id,
+							network_id, gateway_uid,
+							buf.src_nid, 0x0, 0);
+						hw.socket->pkt_send(
+							buf.dest_nid,
+							(uint8_t *)&buf,
+							META_SIZE);
+					} else {
+						timeout_cnt += 1;
+					}
+				}
+				/* check if all the packets were stored */
+				if (0 != incoming_pkts)
+					in_pkts_cnt = 0;
+			} else {
+				/* send FULL signal to the gateway */
+				build_signal(&buf, FULL, unique_id, network_id,
+					     gateway_uid, buf.src_nid, 0x0, 0);
+				hw.socket->pkt_send(buf.dest_nid,
+						    (uint8_t *)&buf, META_SIZE);
+			}
+		}
+	}
+}
+
+uint8_t snpes_node_available_data()
+{
+	uint8_t bytes = 0;
+	uint8_t ii = 0;
+	while (ii < in_pkts_cnt) {
+		bytes += in_pkts[ii].data_size;
+		ii++;
+	}
+	return bytes;
+}
+
+uint8_t snpes_node_read(void *dest, uint8_t amount)
+{
+	uint8_t copied = 0;
+	uint8_t loop = 0;
+	uint8_t ii = 0;
+	uint8_t total_bytes = snpes_node_available_data();
+	if (amount <= total_bytes) {
+		loop = amount / MAX_PKT_DATA_SIZE;
+		loop += ((amount % MAX_PKT_DATA_SIZE) != 0) ? 1 : 0;
+		while (loop != 0) {
+			if (loop > 1) {
+				memcpy(((uint8_t *)dest + copied), &in_pkts[ii],
+				       MAX_PKT_DATA_SIZE);
+				copied += MAX_PKT_DATA_SIZE;
+				amount -= MAX_PKT_DATA_SIZE;
+			} else {
+				memcpy(((uint8_t *)dest + copied), &in_pkts[ii],
+				       amount);
+				copied += amount;
+			}
+			ii++;
+			loop--;
+		}
+	}
+	return copied;
 }
 
 static SnpesStatus_t wait_signal(PacketType_t signal)
