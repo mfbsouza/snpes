@@ -34,21 +34,21 @@ typedef enum { SNPES_OK, SNPES_ERROR } SnpesStatus_t;
 /* maxium amount of packets in the the buffer */
 #define BUF_CNT 4
 /* buffer size in bytes */
-#define BUF_SIZE PKT_SIZE *BUF_CNT
+#define BUF_SIZE (PKT_SIZE * BUF_CNT)
 /* maxium amount of elements in the stream queues */
 #define S_IN_CNT 2
-#define S_OUT_CNT BUF_CNT - S_IN_CNT
+#define S_OUT_CNT (BUF_CNT - S_IN_CNT)
 /* maxium amount of clients */
 #define CLT_CNT 8
 /* maxium amount of packets per data transmission */
-#define MAX_PKT_CNT 1
+#define MAX_PKT_CNT 2
 #endif /* SNPES_ CONFIG */
 
-#define MAX_PKT_DATA_SIZE PKT_SIZE - META_SIZE
-#define MAX_USER_DATA_SIZE MAX_PKT_DATA_SIZE *MAX_PKT_CNT
+#define MAX_PKT_DATA_SIZE (PKT_SIZE - META_SIZE)
+#define MAX_USER_DATA_SIZE (MAX_PKT_DATA_SIZE * MAX_PKT_CNT)
 
 #define MAX_TIMEOUT_CNT 2
 #define TIMEOUT_THLD 10000 // 10 seconds in milliseconds
-#define ALIVE_THLD 5 * 60 // 5 minutes in seconds
+#define ALIVE_THLD (5 * 60) // 5 minutes in seconds
 
 #endif /* __SNPES_CFG_H__ */

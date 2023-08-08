@@ -105,7 +105,7 @@ ClientCtx_t *get_waiting_client(ClientCtx_t *arr)
 {
 	assert(arr);
 	for (int ii = 0; ii < CLT_CNT; ii++) {
-		if (arr[ii].state == WAIT_ACK || arr[ii].state == WAIT_DATA) {
+		if (arr[ii].state == WAIT_ACK || arr[ii].state == WAIT_DATA || arr[ii].state == WAIT_TRANS_START || arr[ii].state == WAIT_DATA_ACK) {
 			return &(arr[ii]);
 		}
 	}

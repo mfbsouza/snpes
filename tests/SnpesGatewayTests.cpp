@@ -1,6 +1,7 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 #include <chrono>
+#include <cstdint>
 
 extern "C" {
 #include <snpes_gateway.h>
@@ -341,9 +342,7 @@ TEST(SnpesGatewayTests, Transmission)
 	/* client 0xAA is now connected */
 
 	/* build a fake TRANS_START packet */
-	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4, 0);
-	// TODO: get rid of this hack
-	recv_buf.data_size = 2;
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4, 2);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectOneCall("mock_avail").andReturnValue(0);
@@ -354,9 +353,7 @@ TEST(SnpesGatewayTests, Transmission)
 	/* let the gateway compute */
 	snpes_compute();
 	/* pretend that we didn't get the TRANS_START */
-	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x5, 0);
-	// TODO: get rid of this hack
-	recv_buf.data_size = 2;
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x5, 2);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectOneCall("mock_avail").andReturnValue(0);
@@ -398,8 +395,7 @@ TEST(SnpesGatewayTests, Transmission)
 	CHECK_EQUAL(0, response->flgs_seq & 0x0F);
 	CHECK_EQUAL(0, response->data_size);
 	/* force a data avail state */
-	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4, 0);
-	recv_buf.data_size = 2;
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4, 2);
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectOneCall("mock_avail").andReturnValue(0);
 	snpes_compute();
@@ -411,6 +407,517 @@ TEST(SnpesGatewayTests, Transmission)
 	CHECK_EQUAL(0xAA, clt_uid);
 	CHECK_EQUAL(0x1236, temp);
 	CHECK_EQUAL(2, size);
+}
+
+TEST(SnpesGatewayTests, DataSendOnePacketOk)
+{
+	uint8_t ret = -1;
+	uint32_t data_to_send = 0xF2F3F4F5;
+	Packet_t *response = NULL;
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
+	/* connect a fake client with UID 0xAA */
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute, it will send a DATA packet */
+	snpes_compute();
+	/* build a fake ACK */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* client 0xAA is now connected */
+
+	/* ask to send data */
+	ret = snpes_write(0xAA, &data_to_send, sizeof(uint32_t));
+	CHECK_EQUAL(SNPES_OK, ret);
+	/* let the gateway compute to see if there is some data ready to send */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* check if the gateway tried to send a TRANS START packet */
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(TRANS_START, ((response->flgs_seq) >> 4) & 0x0F);
+	/* only one packet need to send */
+	CHECK_EQUAL(1, ((response->flgs_seq & 0x0F) >> 2) & 3);
+	/* 0 retries till now */
+	CHECK_EQUAL(0, (response->flgs_seq & 0x0F) & 3);
+	/* data size is 4 bytes long */
+	CHECK_EQUAL(4, response->data_size);
+
+	/* build a fake TRANS_START response */
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4, 4);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute, it should send the DATA packet */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(DATA, ((response->flgs_seq) >> 4) & 0x0F);
+	/* sequence number should be 1 */
+	CHECK_EQUAL(1, response->flgs_seq & 0x0F);
+	/* data size is 4 bytes long */
+	CHECK_EQUAL(4, response->data_size);
+	CHECK_EQUAL(0xF2F3F4F5, *(uint32_t *)response->data);
+
+	/* acknowledge the data */
+	/* build a fake ACK response */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+}
+
+TEST(SnpesGatewayTests, DataSendTwoPacketsOk)
+{
+	uint8_t ret = -1;
+	uint8_t data_to_send[100];
+	data_to_send[0] = 0xF2;
+	data_to_send[58] = 0x6A;
+	Packet_t *response = NULL;
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
+	/* connect a fake client with UID 0xAA */
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute, it will send a DATA packet */
+	snpes_compute();
+	/* build a fake ACK */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* client 0xAA is now connected */
+
+	/* ask to send data */
+	ret = snpes_write(0xAA, &data_to_send, 100);
+	CHECK_EQUAL(SNPES_OK, ret);
+	/* let the gateway compute to see if there is some data ready to send */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* check if the gateway tried to send a TRANS START packet */
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(TRANS_START, ((response->flgs_seq) >> 4) & 0x0F);
+	/* two packets need to send */
+	CHECK_EQUAL(2, ((response->flgs_seq & 0x0F) >> 2) & 3);
+	/* 0 retries till now */
+	CHECK_EQUAL(0, (response->flgs_seq & 0x0F) & 3);
+	/* data size is 4 bytes long */
+	CHECK_EQUAL(100, response->data_size);
+
+	/* build a fake TRANS_START response */
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0xC, 100);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute, it should send the DATA packet */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(DATA, ((response->flgs_seq) >> 4) & 0x0F);
+	/* sequence number should be 1 */
+	CHECK_EQUAL(1, response->flgs_seq & 0x0F);
+	/* data size should be the MAX_PKT_DATA_SIZE */
+	CHECK_EQUAL(MAX_PKT_DATA_SIZE, response->data_size);
+	CHECK_EQUAL(0xF2, *(uint8_t *)response->data);
+
+	/* acknowledge the data */
+	/* build a fake ACK response */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x1, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute, it should send another DATA packet */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(DATA, ((response->flgs_seq) >> 4) & 0x0F);
+	/* sequence number should be 2 */
+	CHECK_EQUAL(2, response->flgs_seq & 0x0F);
+	/* data size should be the MAX_PKT_DATA_SIZE */
+	CHECK_EQUAL((100 - MAX_PKT_DATA_SIZE), response->data_size);
+	CHECK_EQUAL(0x6A, *(uint8_t *)response->data);
+
+	/* acknowledge the data */
+	/* build a fake ACK response */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+}
+
+TEST(SnpesGatewayTests, DataSendTwoPacketsWaitAckFail)
+{
+	uint8_t ret = -1;
+	uint8_t data_to_send[100];
+	data_to_send[0] = 0xF2;
+	data_to_send[58] = 0x6A;
+	Packet_t *response = NULL;
+	snpes_gw_init(0x55, &TestLora, &MockTimer);
+	/* connect a fake client with UID 0xAA */
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectOneCall("mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectOneCall("mock_timer").andReturnValue(1);
+	/* let the gateway compute, it will send a DATA packet */
+	snpes_compute();
+	/* build a fake ACK */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+	/* client 0xAA is now connected */
+
+	/* ask to send data */
+	ret = snpes_write(0xAA, &data_to_send, 100);
+	CHECK_EQUAL(SNPES_OK, ret);
+	/* let the gateway compute to see if there is some data ready to send */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+	/* the gateway tried to send a TRANS START packet */
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(TRANS_START, ((response->flgs_seq) >> 4) & 0x0F);
+	/* two packets need to send */
+	CHECK_EQUAL(2, ((response->flgs_seq & 0x0F) >> 2) & 3);
+	/* 0 retries till now */
+	CHECK_EQUAL(0, (response->flgs_seq & 0x0F) & 3);
+	/* data size is 4 bytes long */
+	CHECK_EQUAL(100, response->data_size);
+
+	/* force a wait TRANS_START timeout */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(3, "mock_timer").andReturnValue(1 + TIMEOUT_THLD);
+	/* let the gateway compute, it shoud try to resend the TRANS_START */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(TRANS_START, ((response->flgs_seq) >> 4) & 0x0F);
+	/* two packets need to send */
+	CHECK_EQUAL(2, ((response->flgs_seq & 0x0F) >> 2) & 3);
+	/* 1 retry till now */
+	CHECK_EQUAL(1, (response->flgs_seq & 0x0F) & 3);
+	/* data size is 4 bytes long */
+	CHECK_EQUAL(100, response->data_size);
+
+	/* force a wait TRANS_START timeout again */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	/* let the gateway compute, it shoud try to resend the TRANS_START */
+	snpes_compute();
+}
+
+TEST(SnpesGatewayTests, DataSendTwoPacketsWaitDataAckFail)
+{
+	uint8_t ret = -1;
+	uint8_t data_to_send[100];
+	data_to_send[0] = 0xF2;
+	data_to_send[58] = 0x6A;
+	Packet_t *response = NULL;
+	snpes_gw_init(0x55, &TestLora, &MockTimer);
+	/* connect a fake client with UID 0xAA */
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectOneCall("mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectOneCall("mock_timer").andReturnValue(1);
+	/* let the gateway compute, it will send a DATA packet */
+	snpes_compute();
+	/* build a fake ACK */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+	/* client 0xAA is now connected */
+
+	/* ask to send data */
+	ret = snpes_write(0xAA, &data_to_send, 100);
+	CHECK_EQUAL(SNPES_OK, ret);
+	/* let the gateway compute to see if there is some data ready to send */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+	/* the gateway tried to send a TRANS START packet */
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(TRANS_START, ((response->flgs_seq) >> 4) & 0x0F);
+	/* two packets need to send */
+	CHECK_EQUAL(2, ((response->flgs_seq & 0x0F) >> 2) & 3);
+	/* 0 retries till now */
+	CHECK_EQUAL(0, (response->flgs_seq & 0x0F) & 3);
+	/* data size is 4 bytes long */
+	CHECK_EQUAL(100, response->data_size);
+
+	/* build a fake TRANS_START response */
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0xC, 100);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	/* let the gateway compute */
+	snpes_compute();
+
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1);
+	/* let the gateway compute, it shoud try to send the data packet */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(DATA, ((response->flgs_seq) >> 4) & 0x0F);
+	/* sequence number should be 1 */
+	CHECK_EQUAL(1, response->flgs_seq & 0x0F);
+	/* data size should be the MAX_PKT_DATA_SIZE */
+	CHECK_EQUAL(MAX_PKT_DATA_SIZE, response->data_size);
+	CHECK_EQUAL(0xF2, *(uint8_t *)response->data);
+	memset(send_buf.data, 0, sizeof(Packet_t));
+
+	/* force a wait DATA ACK timeout */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(3, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	/* let the gateway compute */
+	snpes_compute();
+
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	/* let the gateway compute, it shoud try to resend the data packet */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(DATA, ((response->flgs_seq) >> 4) & 0x0F);
+	/* sequence number should be 1 */
+	CHECK_EQUAL(1, response->flgs_seq & 0x0F);
+	/* data size should be the MAX_PKT_DATA_SIZE */
+	CHECK_EQUAL(MAX_PKT_DATA_SIZE, response->data_size);
+	CHECK_EQUAL(0xF2, *(uint8_t *)response->data);
+	memset(send_buf.data, 0, sizeof(Packet_t));
+
+	/* acknowledge the data */
+	/* build a fake ACK response */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	/* let the gateway compute */
+	snpes_compute();
+
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	/* let the gateway compute, it shoud try to send the second data packet */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(DATA, ((response->flgs_seq) >> 4) & 0x0F);
+	/* sequence number should be 2 */
+	CHECK_EQUAL(2, response->flgs_seq & 0x0F);
+	/* data size should be the MAX_PKT_DATA_SIZE */
+	CHECK_EQUAL((100 - MAX_PKT_DATA_SIZE), response->data_size);
+	CHECK_EQUAL(0x6A, *(uint8_t *)response->data);
+	memset(send_buf.data, 0, sizeof(Packet_t));
+
+	/* force a wait DATA ACK timeout again */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(3, "mock_timer").andReturnValue(1 + 3*TIMEOUT_THLD);
+	/* let the gateway compute */
+	snpes_compute();
+
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 3*TIMEOUT_THLD);
+	/* let the gateway compute, it shoud try to resend the 2nd data packet */
+	snpes_compute();
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(DATA, ((response->flgs_seq) >> 4) & 0x0F);
+	/* sequence number should be 2 */
+	CHECK_EQUAL(2, response->flgs_seq & 0x0F);
+	/* data size should be the MAX_PKT_DATA_SIZE */
+	CHECK_EQUAL((100 - MAX_PKT_DATA_SIZE), response->data_size);
+	CHECK_EQUAL(0x6A, *(uint8_t *)response->data);
+	memset(send_buf.data, 0, sizeof(Packet_t));
+
+	/* force the last wait DATA ACK timeout */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 4*TIMEOUT_THLD);
+	/* let the gateway compute */
+	snpes_compute();
+}
+
+TEST(SnpesGatewayTests, DataSendOnePacketFail)
+{
+	uint8_t ret = -1;
+	uint32_t data_to_send = 0xF2F3F4F5;
+	Packet_t *response = NULL;
+	snpes_gw_init(0x55, &TestLora, &TestTimer);
+	/* connect a fake client with UID 0xAA */
+	build_signal(&(recv_buf), SYNC, 0xAA, 0xFF, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute, it will send a DATA packet */
+	snpes_compute();
+	/* build a fake ACK */
+	build_signal(&(recv_buf), ACK, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* client 0xAA is now connected */
+
+	/* ask to send data */
+	ret = snpes_write(0xAA, &data_to_send, sizeof(uint32_t));
+	CHECK_EQUAL(SNPES_OK, ret);
+	/* let the gateway compute to see if there is some data ready to send */
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	snpes_compute();
+	/* say that there is no packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
+	/* check if the gateway tried to send a TRANS START packet */
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0x55, response->src_uid);
+	CHECK_EQUAL(0x00, response->src_nid);
+	CHECK_EQUAL(0xAA, response->dest_uid);
+	CHECK_EQUAL(0x01, response->dest_nid);
+	CHECK_EQUAL(TRANS_START, ((response->flgs_seq) >> 4) & 0x0F);
+	/* only one packet need to send */
+	CHECK_EQUAL(1, ((response->flgs_seq & 0x0F) >> 2) & 3);
+	/* 0 retries till now */
+	CHECK_EQUAL(0, (response->flgs_seq & 0x0F) & 3);
+	/* data size is 4 bytes long */
+	CHECK_EQUAL(4, response->data_size);
+
+	/* build a fake FULL response */
+	build_signal(&(recv_buf), FULL, 0xAA, 0x01, 0x55, 0x00, 0x0, 0);
+	/* say that there is a packet availible */
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	mock().expectOneCall("mock_avail").andReturnValue(0);
+	/* let the gateway compute */
+	snpes_compute();
 }
 
 TEST(SnpesGatewayTests, DataTimeout)
@@ -440,9 +947,7 @@ TEST(SnpesGatewayTests, DataTimeout)
 	snpes_compute();
 	/* now that we are connect, lest fake that a long time has passed */
 	/* build a fake TRANS_START packet */
-	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4, 0);
-	// TODO: get rid of this hack
-	recv_buf.data_size = 2;
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0x4, 2);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectOneCall("mock_avail").andReturnValue(0);

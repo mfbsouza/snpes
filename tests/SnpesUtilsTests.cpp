@@ -141,3 +141,14 @@ TEST(SnpesUtilsTests, GetPacketType)
 	enqueue_signal(&test_dev, SYNC, 0x14, 0x16, 0x0, 0);
 	CHECK_EQUAL(SYNC, get_pkt_type((Packet_t *)stream_buf));
 }
+
+TEST(SnpesUtilsTests, GetRTSClient)
+{
+	ClientCtx_t *ret = NULL;
+	test_clients[2].out_expt_pkt = 1;
+	ret = get_rts_client(test_clients);
+	POINTERS_EQUAL(&(test_clients[2]), ret);
+	test_clients[2].out_expt_pkt = 0;
+	ret = get_rts_client(test_clients);
+	POINTERS_EQUAL(NULL, ret);
+}

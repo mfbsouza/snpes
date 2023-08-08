@@ -4,6 +4,7 @@
 #include "snpes_utils.h"
 #include "CircularQueue.h"
 #include "MemoryManager.h"
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
@@ -103,7 +104,7 @@ SnpesStatus_t snpes_write(uint8_t clt_uid, const void *src, uint16_t size)
 	    (clt->send_data = memmgr_alloc(&dev.mem, size)) != NULL) {
 		memcpy(clt->send_data, src, size);
 		clt->send_data_size = size;
-		clt->outgoing_pkt_cnt = size / MAX_PKT_DATA_SIZE;
+		clt->outgoing_pkt_cnt = (uint8_t)(size / MAX_PKT_DATA_SIZE);
 		clt->outgoing_pkt_cnt += ((size % MAX_PKT_DATA_SIZE) != 0) ? 1 :
 									     0;
 		clt->out_expt_pkt = 1;
@@ -468,6 +469,7 @@ static void gateway_state_machine()
 			clt->out_expt_pkt++;
 			clt->outgoing_pkt_cnt--;
 			clt->send_data_size -= MAX_PKT_DATA_SIZE;
+			clt->timeout_cnt = 0;
 			/* check if there is any more data to send */
 			if (0 == clt->outgoing_pkt_cnt) {
 				/* there isn't. free the memory and send it back to idle */
@@ -478,10 +480,15 @@ static void gateway_state_machine()
 				clt->outgoing_pkt_cnt = 0;
 				clt->out_expt_pkt = 0;
 				clt->state = IDLE;
+				// TODO: don't like this in here
+				clt->alive_ref =
+					(uint32_t)(dev.hw.timer->millis() /
+						   1000);
+				break;
 			}
 		}
 		/* create data packet to send */
-		if (1 > clt->outgoing_pkt_cnt) {
+		if (1 < clt->outgoing_pkt_cnt) {
 			enqueue_data(
 				&dev, clt->unique_id, clt->network_id,
 				clt->out_expt_pkt,
@@ -522,7 +529,7 @@ static void gateway_state_machine()
 			else {
 				clt->timer_ref = dev.hw.timer->millis();
 				/* create data packet to send */
-				if (1 > clt->outgoing_pkt_cnt) {
+				if (1 < clt->outgoing_pkt_cnt) {
 					enqueue_data(
 						&dev, clt->unique_id,
 						clt->network_id,
