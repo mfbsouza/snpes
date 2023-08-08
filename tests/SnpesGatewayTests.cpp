@@ -547,7 +547,8 @@ TEST(SnpesGatewayTests, DataSendTwoPacketsOk)
 	CHECK_EQUAL(100, response->data_size);
 
 	/* build a fake TRANS_START response */
-	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0xC, 100);
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0xC,
+		     100);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectOneCall("mock_avail").andReturnValue(0);
@@ -684,7 +685,8 @@ TEST(SnpesGatewayTests, DataSendTwoPacketsWaitAckFail)
 	/* force a wait TRANS_START timeout again */
 	/* say that there is no packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	mock().expectNCalls(2, "mock_timer")
+		.andReturnValue(1 + 2 * TIMEOUT_THLD);
 	/* let the gateway compute, it shoud try to resend the TRANS_START */
 	snpes_compute();
 }
@@ -748,7 +750,8 @@ TEST(SnpesGatewayTests, DataSendTwoPacketsWaitDataAckFail)
 	CHECK_EQUAL(100, response->data_size);
 
 	/* build a fake TRANS_START response */
-	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0xC, 100);
+	build_signal(&(recv_buf), TRANS_START, 0xAA, 0x01, 0x55, 0x00, 0xC,
+		     100);
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectOneCall("mock_avail").andReturnValue(0);
@@ -777,13 +780,15 @@ TEST(SnpesGatewayTests, DataSendTwoPacketsWaitDataAckFail)
 	/* force a wait DATA ACK timeout */
 	/* say that there is no packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(3, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	mock().expectNCalls(3, "mock_timer")
+		.andReturnValue(1 + 2 * TIMEOUT_THLD);
 	/* let the gateway compute */
 	snpes_compute();
 
 	/* say that there is no packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	mock().expectNCalls(2, "mock_timer")
+		.andReturnValue(1 + 2 * TIMEOUT_THLD);
 	/* let the gateway compute, it shoud try to resend the data packet */
 	snpes_compute();
 	response = (Packet_t *)send_buf.data;
@@ -805,13 +810,15 @@ TEST(SnpesGatewayTests, DataSendTwoPacketsWaitDataAckFail)
 	/* say that there is a packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(1);
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	mock().expectNCalls(2, "mock_timer")
+		.andReturnValue(1 + 2 * TIMEOUT_THLD);
 	/* let the gateway compute */
 	snpes_compute();
 
 	/* say that there is no packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 2*TIMEOUT_THLD);
+	mock().expectNCalls(2, "mock_timer")
+		.andReturnValue(1 + 2 * TIMEOUT_THLD);
 	/* let the gateway compute, it shoud try to send the second data packet */
 	snpes_compute();
 	response = (Packet_t *)send_buf.data;
@@ -830,13 +837,15 @@ TEST(SnpesGatewayTests, DataSendTwoPacketsWaitDataAckFail)
 	/* force a wait DATA ACK timeout again */
 	/* say that there is no packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(3, "mock_timer").andReturnValue(1 + 3*TIMEOUT_THLD);
+	mock().expectNCalls(3, "mock_timer")
+		.andReturnValue(1 + 3 * TIMEOUT_THLD);
 	/* let the gateway compute */
 	snpes_compute();
 
 	/* say that there is no packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 3*TIMEOUT_THLD);
+	mock().expectNCalls(2, "mock_timer")
+		.andReturnValue(1 + 3 * TIMEOUT_THLD);
 	/* let the gateway compute, it shoud try to resend the 2nd data packet */
 	snpes_compute();
 	response = (Packet_t *)send_buf.data;
@@ -855,7 +864,8 @@ TEST(SnpesGatewayTests, DataSendTwoPacketsWaitDataAckFail)
 	/* force the last wait DATA ACK timeout */
 	/* say that there is no packet availible */
 	mock().expectOneCall("mock_avail").andReturnValue(0);
-	mock().expectNCalls(2, "mock_timer").andReturnValue(1 + 4*TIMEOUT_THLD);
+	mock().expectNCalls(2, "mock_timer")
+		.andReturnValue(1 + 4 * TIMEOUT_THLD);
 	/* let the gateway compute */
 	snpes_compute();
 }

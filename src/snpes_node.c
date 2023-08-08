@@ -123,8 +123,7 @@ SnpesStatus_t snpes_send(uint8_t dest_uid, const void *src, uint8_t size)
 			// TODO: 1 << 2: 1 should be how many packets are we sending
 			build_signal(&buf, TRANS_START, unique_id, network_id,
 				     dest_uid, GATEWAY,
-				     ((1 << 2) | (timeout_cnt & 3)),
-				     0);
+				     ((1 << 2) | (timeout_cnt & 3)), 0);
 			buf.data_size = size;
 			hw.socket->pkt_send(buf.dest_nid, (uint8_t *)&buf,
 					    META_SIZE);
