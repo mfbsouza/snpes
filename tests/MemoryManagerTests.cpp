@@ -11,13 +11,20 @@ TEST_GROUP(MemoryManagerTests)
 	MemMgr_t heap;
 };
 
-TEST(MemoryManagerTests, Init)
+TEST(MemoryManagerTests, InitOk)
 {
 	memmgr_init(&heap, (void *)buffer, 24);
 	POINTERS_EQUAL((void *)buffer, heap.heap_start);
 	POINTERS_EQUAL((void *)&buffer[24], heap.heap_end);
 	CHECK_EQUAL(24, ((uint16_t *)buffer)[0]);
 	CHECK_EQUAL(24, ((uint16_t *)buffer)[11]);
+}
+
+TEST(MemoryManagerTests, InitFail)
+{
+	int8_t ret = 0;
+	ret = memmgr_init(&heap, (void *)buffer, 23);
+	CHECK_EQUAL(-1, ret);
 }
 
 TEST(MemoryManagerTests, Alloc)
