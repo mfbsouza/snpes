@@ -1,6 +1,7 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 #include <chrono>
+#include <cstdint>
 
 extern "C" {
 #include <snpes_node.h>
@@ -19,6 +20,7 @@ typedef struct {
 /* test variables */
 static Packet_t recv_buf;
 static Packet_t recv_buf2;
+static Packet_t recv_buf_trans_ok[4];
 static uint8_t cnt = 0;
 uint8_t buf_select = 0;
 
@@ -47,6 +49,15 @@ static void fake_pkt_recv(uint8_t *id, uint8_t *buf, uint8_t *size)
 		*size = recv_buf2.data_size + 6;
 		memcpy(buf, &(recv_buf2), *size);
 	}
+}
+
+static void fake_pkt_recv_trans_ok(uint8_t *id, uint8_t *buf, uint8_t *size)
+{
+	static uint8_t ii = 0;
+	*id = 0;
+	*size = recv_buf_trans_ok[ii].data_size + 6;
+	memcpy(buf, &recv_buf_trans_ok[ii], *size);
+	ii++;
 }
 
 static uint8_t mock_avail()
@@ -86,6 +97,9 @@ TEST_GROUP(SnpesNodeTests)
 	LoraItf_t TestLora = { fake_set_id, fake_pkt_send, fake_pkt_recv,
 			       mock_avail };
 
+	LoraItf_t TestLoraTransOk = { fake_set_id, fake_pkt_send,
+				      fake_pkt_recv_trans_ok, mock_avail };
+
 	TimerItf_t TestTimer = { nullptr, test_millis };
 
 	TimerItf_t TestTimerTimeout = { nullptr, timeout_millis };
@@ -99,19 +113,6 @@ TEST_GROUP(SnpesNodeTests)
 	}
 };
 
-TEST(SnpesNodeTests, Scan)
-{
-	SnpesStatus_t ret = SNPES_ERROR;
-	uint8_t gw_uid = 0;
-	snpes_node_init(0xAA, &TestLora, &TestTimer);
-	/* build fake INFO packet */
-	build_signal(&recv_buf, INFO, 0x55, 0x00, 0xAA, 0xFF, 0x0, 0);
-	mock().expectOneCall("mock_avail").andReturnValue(1);
-	ret = snpes_scan(&gw_uid);
-	CHECK_EQUAL(SNPES_OK, ret);
-	CHECK_EQUAL(0x55, gw_uid);
-}
-
 TEST(SnpesNodeTests, ScanFail)
 {
 	SnpesStatus_t ret = SNPES_OK;
@@ -122,7 +123,7 @@ TEST(SnpesNodeTests, ScanFail)
 	CHECK_EQUAL(0, gw_uid);
 }
 
-TEST(SnpesNodeTests, Connect)
+TEST(SnpesNodeTests, ConnectOk)
 {
 	Packet_t *response = NULL;
 	SnpesStatus_t ret = SNPES_ERROR;
@@ -236,4 +237,132 @@ TEST(SnpesNodeTests, Send)
 	ret = snpes_send(0x55, &data, sizeof(uint8_t));
 	CHECK_EQUAL(SNPES_ERROR, ret);
 	buf_select = 0;
+}
+
+TEST(SnpesNodeTests, AliveCheck)
+{
+	Packet_t *response = NULL;
+	uint8_t data = 1;
+	uint8_t ret = 1;
+
+	/* connect to the fake gateway */
+	snpes_node_init(0xAA, &TestLora, &TestTimer);
+	/* build fake DATA packet */
+	build_data(&recv_buf, 0x55, 0x00, 0xAA, 0xFF, 0x0, &data,
+		   sizeof(uint8_t));
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	ret = snpes_connect(0x55);
+	CHECK_EQUAL(SNPES_OK, ret);
+
+	/* build fake ALIVE packet */
+	build_signal(&recv_buf, ALIVE, 0x55, 0x00, 0xAA, 0x01, 0x0, 0);
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	snpes_node_sync(0x55);
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0xAA, response->src_uid);
+	CHECK_EQUAL(0x01, response->src_nid);
+	CHECK_EQUAL(0x55, response->dest_uid);
+	CHECK_EQUAL(0x00, response->dest_nid);
+	CHECK_EQUAL(ACK, ((response->flgs_seq) >> 4) & 0x0F);
+	CHECK_EQUAL(0, response->flgs_seq & 0x0F);
+	CHECK_EQUAL(0, response->data_size);
+}
+
+TEST(SnpesNodeTests, TransPktCntError)
+{
+	Packet_t *response = NULL;
+	uint8_t data = 1;
+	uint8_t ret = 1;
+
+	/* connect to the fake gateway */
+	snpes_node_init(0xAA, &TestLora, &TestTimer);
+	/* build fake DATA packet */
+	build_data(&recv_buf, 0x55, 0x00, 0xAA, 0xFF, 0x0, &data,
+		   sizeof(uint8_t));
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	ret = snpes_connect(0x55);
+	CHECK_EQUAL(SNPES_OK, ret);
+
+	/* build wrong TRANS_START packet */
+	build_signal(&recv_buf, TRANS_START, 0x55, 0x00, 0xAA, 0x01, 0xC, 0);
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	snpes_node_sync(0x55);
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0xAA, response->src_uid);
+	CHECK_EQUAL(0x01, response->src_nid);
+	CHECK_EQUAL(0x55, response->dest_uid);
+	CHECK_EQUAL(0x00, response->dest_nid);
+	CHECK_EQUAL(FULL, ((response->flgs_seq) >> 4) & 0x0F);
+	CHECK_EQUAL(0, response->flgs_seq & 0x0F);
+	CHECK_EQUAL(0, response->data_size);
+}
+
+TEST(SnpesNodeTests, TransTwoPktsOk)
+{
+	Packet_t *response = NULL;
+	uint8_t data = 1;
+	uint8_t data_send[100] = { 0 };
+	uint8_t data_read[100] = { 0 };
+	data_send[0] = 0x2F;
+	data_send[58] = 0x6A;
+	uint8_t ret = 1;
+
+	/* build packet sequence */
+	build_data(&recv_buf_trans_ok[0], 0x55, 0x00, 0xAA, 0xFF, 0x0, &data,
+		   sizeof(uint8_t));
+	build_signal(&recv_buf_trans_ok[1], TRANS_START, 0x55, 0x00, 0xAA, 0x01,
+		     0x8, 0);
+	build_data(&recv_buf_trans_ok[2], 0x55, 0x00, 0xAA, 0x01, 0x1,
+		   data_send, MAX_PKT_DATA_SIZE);
+	build_data(&recv_buf_trans_ok[3], 0x55, 0x00, 0xAA, 0x01, 0x2,
+		   (data_send + MAX_PKT_DATA_SIZE), (100 - MAX_PKT_DATA_SIZE));
+
+	/* connect to the fake gateway */
+	snpes_node_init(0xAA, &TestLoraTransOk, &TestTimer);
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	ret = snpes_connect(0x55);
+	CHECK_EQUAL(SNPES_OK, ret);
+
+	mock().expectNCalls(3, "mock_avail").andReturnValue(1);
+	snpes_node_sync(0x55);
+	response = (Packet_t *)send_buf.data;
+	CHECK_EQUAL(0xAA, response->src_uid);
+	CHECK_EQUAL(0x01, response->src_nid);
+	CHECK_EQUAL(0x55, response->dest_uid);
+	CHECK_EQUAL(0x00, response->dest_nid);
+	CHECK_EQUAL(ACK, ((response->flgs_seq) >> 4) & 0x0F);
+	CHECK_EQUAL(0, response->flgs_seq & 0x0F);
+	CHECK_EQUAL(0, response->data_size);
+
+	ret = snpes_node_available_data();
+	CHECK_EQUAL(100, ret);
+
+	ret = snpes_node_read(data_read, ret);
+	CHECK_EQUAL(100, ret);
+	CHECK_EQUAL(0x2F, data_read[0]);
+	CHECK_EQUAL(0x6A, data_read[58]);
+}
+
+TEST(SnpesNodeTests, Scan)
+{
+	SnpesStatus_t ret = SNPES_OK;
+	uint8_t gw_uid = 0;
+	ret = snpes_scan(&gw_uid);
+	CHECK_EQUAL(SNPES_ERROR, ret);
+	CHECK_EQUAL(0, gw_uid);
+
+	snpes_node_init(0xAA, &TestLora, &TestTimer);
+	/* build fake INFO packet */
+	build_signal(&recv_buf, INFO, 0x55, 0x00, 0xAA, 0xFF, 0x0, 0);
+	mock().expectOneCall("mock_avail").andReturnValue(1);
+	ret = snpes_scan(&gw_uid);
+	CHECK_EQUAL(SNPES_OK, ret);
+	CHECK_EQUAL(0x55, gw_uid);
+}
+
+TEST(SnpesNodeTests, ConnectFail)
+{
+	SnpesStatus_t ret = SNPES_OK;
+	ret = snpes_connect(0x55);
+	CHECK_EQUAL(SNPES_ERROR, ret);
 }

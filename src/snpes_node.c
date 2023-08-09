@@ -273,13 +273,13 @@ uint8_t snpes_node_read(void *dest, uint8_t amount)
 		loop += ((amount % MAX_PKT_DATA_SIZE) != 0) ? 1 : 0;
 		while (loop != 0) {
 			if (loop > 1) {
-				memcpy(((uint8_t *)dest + copied), &in_pkts[ii],
-				       MAX_PKT_DATA_SIZE);
+				memcpy(((uint8_t *)dest + copied),
+				       &in_pkts[ii].data, MAX_PKT_DATA_SIZE);
 				copied += MAX_PKT_DATA_SIZE;
 				amount -= MAX_PKT_DATA_SIZE;
 			} else {
-				memcpy(((uint8_t *)dest + copied), &in_pkts[ii],
-				       amount);
+				memcpy(((uint8_t *)dest + copied),
+				       &in_pkts[ii].data, amount);
 				copied += amount;
 			}
 			ii++;
