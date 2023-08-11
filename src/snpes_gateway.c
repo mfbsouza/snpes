@@ -2,6 +2,7 @@
 #include "snpes_cfg.h"
 #include "snpes_types.h"
 #include "snpes_utils.h"
+#include "snpes_client_manager.h"
 #include "CircularQueue.h"
 #include "MemoryManager.h"
 #include <stdint.h>
